@@ -7,15 +7,16 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
 
-    try {const { title, description, start_time, end_time, user_id, people_ids } = body;
+    try {
 
-        // 🔹 PARSEAR BODY (FIX VERCEL)
+        // ✅ PARSEAR BODY PRIMERO (IMPORTANTE)
         let body = req.body;
+
         if (typeof body === "string") {
             body = JSON.parse(body);
         }
 
-        // 🔹 GET ACTIVIDADES (CON RELACIONES)
+        // 🔹 GET ACTIVIDADES
         if (req.method === 'GET') {
 
             const { data, error } = await supabase
@@ -38,12 +39,11 @@ export default async function handler(req, res) {
             return res.json(data);
         }
 
-        // 🔹 POST (CREAR ACTIVIDAD + ASIGNAR PERSONAS)
+        // 🔹 POST
         if (req.method === 'POST') {
 
             console.log("BODY:", body);
 
-            // ✅ FIX CLAVE: incluir people_ids
             const { title, description, start_time, end_time, user_id, people_names } = body;
 
             if (!title || !start_time || !end_time || !user_id) {
@@ -69,14 +69,14 @@ export default async function handler(req, res) {
                 return res.status(500).json({ success: false, message: error.message });
             }
 
-            // ✅ 2. GUARDAR ENCARGADOS EN activity_assignments
+            // ✅ 2. PERSONAS
             if (people_names && Array.isArray(people_names) && people_names.length > 0) {
 
                 let person_ids = [];
 
                 for (let name of people_names) {
 
-                    // 🔍 1. Buscar si ya existe
+                    // 🔍 Buscar existente
                     const { data: existing } = await supabase
                         .from('people')
                         .select('*')
@@ -86,7 +86,7 @@ export default async function handler(req, res) {
                     if (existing) {
                         person_ids.push(existing.id);
                     } else {
-                        // ➕ 2. Crear persona nueva
+                        // ➕ Crear
                         const { data: newPerson, error } = await supabase
                             .from('people')
                             .insert([{ name }])
@@ -102,7 +102,7 @@ export default async function handler(req, res) {
                     }
                 }
 
-                // 🔗 3. Crear asignaciones
+                // 🔗 Asignaciones
                 const assignments = person_ids.map(person_id => ({
                     activity_id: activity.id,
                     person_id
@@ -121,19 +121,10 @@ export default async function handler(req, res) {
                 }
             }
 
-                if (assignError) {
-                    console.error("ASSIGN ERROR:", assignError);
-                    return res.status(500).json({
-                        success: false,
-                        message: assignError.message
-                    });
-                }
-            
-
             return res.json({ success: true, activity });
         }
 
-        // 🔹 DELETE ACTIVIDAD
+        // 🔹 DELETE
         if (req.method === 'DELETE') {
 
             const { id } = req.query;
@@ -142,7 +133,6 @@ export default async function handler(req, res) {
                 return res.status(400).json({ success: false });
             }
 
-            // eliminar relaciones primero
             await supabase.from('activity_assignments').delete().eq('activity_id', id);
             await supabase.from('activity_logs').delete().eq('activity_id', id);
             await supabase.from('activity_history').delete().eq('activity_id', id);
@@ -160,7 +150,6 @@ export default async function handler(req, res) {
             return res.json({ success: true });
         }
 
-        // 🔹 MÉTODO NO PERMITIDO
         return res.status(405).json({ error: 'Method not allowed' });
 
     } catch (err) {
