@@ -68,6 +68,28 @@ export default async function handler(req, res) {
                 return res.status(500).json({ success: false, message: error.message });
             }
 
+            // ✅ 2. INSERTAR PERSONAS (FIX CLAVE)
+            if (people_ids && Array.isArray(people_ids) && people_ids.length > 0) {
+
+                const assignments = people_ids.map(person_id => ({
+                    activity_id: activity.id,
+                    person_id
+                }));
+
+                const { error: assignError } = await supabase
+                    .from('activity_assignments')
+                    .insert(assignments);
+
+                if (assignError) {
+                    console.error("ASSIGN ERROR:", assignError);
+                    return res.status(500).json({
+                        success: false,
+                        message: assignError.message
+                    });
+                }
+            }
+
+            return res.json({ success: true, activity });
         }
 
         // 🔹 DELETE ACTIVIDAD
