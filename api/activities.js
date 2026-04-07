@@ -11,12 +11,11 @@ export default async function handler(req, res) {
 
         // 🔹 PARSEAR BODY (FIX VERCEL)
         let body = req.body;
-
         if (typeof body === "string") {
             body = JSON.parse(body);
         }
 
-        // 🔹 GET
+        // 🔹 GET ACTIVIDADES (CON RELACIONES)
         if (req.method === 'GET') {
 
             const { data, error } = await supabase
@@ -38,53 +37,92 @@ export default async function handler(req, res) {
 
             return res.json(data);
         }
-}
-        // 🔹 POST
-if (req.method === 'POST') {
 
-    console.log("BODY:", body);
+        // 🔹 POST (CREAR ACTIVIDAD + ASIGNAR PERSONAS)
+        if (req.method === 'POST') {
 
-    const { title, start_time, end_time, user_id, people_ids } = body;
+            console.log("BODY:", body);
 
-    if (!title || !start_time || !end_time || !user_id) {
-        return res.status(400).json({ success: false, message: "Datos incompletos" });
-    }
+            const { title, start_time, end_time, user_id, people_ids } = body;
 
-    // 🔥 1. CREAR ACTIVIDAD
-    const { data: activity, error } = await supabase
-        .from('activities')
-        .insert([{
-            title,
-            start_time,
-            end_time,
-            status: 'pending',
-            created_by: user_id
-        }])
-        .select()
-        .single();
+            if (!title || !start_time || !end_time || !user_id) {
+                return res.status(400).json({ success: false, message: "Datos incompletos" });
+            }
 
-    if (error) {
-        console.error("POST ERROR:", error);
-        return res.status(500).json({ success: false, message: error.message });
-    }
+            // ✅ 1. CREAR ACTIVIDAD
+            const { data: activity, error } = await supabase
+                .from('activities')
+                .insert([{
+                    title,
+                    start_time,
+                    end_time,
+                    status: 'pending',
+                    created_by: user_id
+                }])
+                .select()
+                .single();
 
-    // 🔥 2. INSERTAR PERSONAS (AQUÍ ESTABA EL PROBLEMA)
-    if (people_ids && people_ids.length > 0) {
+            if (error) {
+                console.error("POST ERROR:", error);
+                return res.status(500).json({ success: false, message: error.message });
+            }
 
-        const assignments = people_ids.map(person_id => ({
-            activity_id: activity.id,
-            person_id
-        }));
+            // ✅ 2. INSERTAR PERSONAS (FIX CLAVE)
+            if (people_ids && Array.isArray(people_ids) && people_ids.length > 0) {
 
-        const { error: assignError } = await supabase
-            .from('activity_assignments')
-            .insert(assignments);
+                const assignments = people_ids.map(person_id => ({
+                    activity_id: activity.id,
+                    person_id
+                }));
 
-        if (assignError) {
-            console.error("ASSIGN ERROR:", assignError);
+                const { error: assignError } = await supabase
+                    .from('activity_assignments')
+                    .insert(assignments);
+
+                if (assignError) {
+                    console.error("ASSIGN ERROR:", assignError);
+                    return res.status(500).json({
+                        success: false,
+                        message: assignError.message
+                    });
+                }
+            }
+
+            return res.json({ success: true, activity });
         }
-    }
 
-    return res.json({ success: true, activity });
-}
+        // 🔹 DELETE ACTIVIDAD
+        if (req.method === 'DELETE') {
+
+            const { id } = req.query;
+
+            if (!id) {
+                return res.status(400).json({ success: false });
+            }
+
+            // eliminar relaciones primero
+            await supabase.from('activity_assignments').delete().eq('activity_id', id);
+            await supabase.from('activity_logs').delete().eq('activity_id', id);
+            await supabase.from('activity_history').delete().eq('activity_id', id);
+
+            const { error } = await supabase
+                .from('activities')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                console.error("DELETE ERROR:", error);
+                return res.status(500).json({ success: false, message: error.message });
+            }
+
+            return res.json({ success: true });
+        }
+
+        // 🔹 MÉTODO NO PERMITIDO
+        return res.status(405).json({ error: 'Method not allowed' });
+
+    } catch (err) {
+        console.error("SERVER ERROR:", err);
+        return res.status(500).json({ success: false, message: err.message });
+    }
 }
