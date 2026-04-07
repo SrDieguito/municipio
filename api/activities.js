@@ -38,68 +38,53 @@ export default async function handler(req, res) {
 
             return res.json(data);
         }
-
+}
         // 🔹 POST
-        if (req.method === 'POST') {
+if (req.method === 'POST') {
 
-            console.log("BODY:", body);
+    console.log("BODY:", body);
 
-            const { title, start_time, end_time, user_id } = body;
+    const { title, start_time, end_time, user_id, people_ids } = body;
 
-            if (!title || !start_time || !end_time || !user_id) {
-                return res.status(400).json({ success: false, message: "Datos incompletos" });
-            }
-
-            const { data: activity, error } = await supabase
-                .from('activities')
-                .insert([{
-                    title,
-                    start_time,
-                    end_time,
-                    status: 'pending',
-                    created_by: user_id
-                }])
-                .select()
-                .single();
-
-            if (error) {
-                console.error("POST ERROR:", error);
-                return res.status(500).json({ success: false, message: error.message });
-            }
-
-            return res.json({ success: true, activity });
-        }
-
-        // 🔹 DELETE
-        if (req.method === 'DELETE') {
-
-            const { id } = req.query;
-
-            if (!id) {
-                return res.status(400).json({ success: false });
-            }
-
-            await supabase.from('activity_assignments').delete().eq('activity_id', id);
-            await supabase.from('activity_logs').delete().eq('activity_id', id);
-            await supabase.from('activity_history').delete().eq('activity_id', id);
-
-            const { error } = await supabase
-                .from('activities')
-                .delete()
-                .eq('id', id);
-
-            if (error) {
-                console.error("DELETE ERROR:", error);
-                return res.status(500).json({ success: false, message: error.message });
-            }
-
-            return res.json({ success: true });
-        }
-
-        return res.status(405).json({ error: 'Method not allowed' });
-
-    } catch (err) {
-        console.error("SERVER ERROR:", err);
-        return res.status(500).json({ success: false, message: err.message });
+    if (!title || !start_time || !end_time || !user_id) {
+        return res.status(400).json({ success: false, message: "Datos incompletos" });
     }
+
+    // 🔥 1. CREAR ACTIVIDAD
+    const { data: activity, error } = await supabase
+        .from('activities')
+        .insert([{
+            title,
+            start_time,
+            end_time,
+            status: 'pending',
+            created_by: user_id
+        }])
+        .select()
+        .single();
+
+    if (error) {
+        console.error("POST ERROR:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+
+    // 🔥 2. INSERTAR PERSONAS (AQUÍ ESTABA EL PROBLEMA)
+    if (people_ids && people_ids.length > 0) {
+
+        const assignments = people_ids.map(person_id => ({
+            activity_id: activity.id,
+            person_id
+        }));
+
+        const { error: assignError } = await supabase
+            .from('activity_assignments')
+            .insert(assignments);
+
+        if (assignError) {
+            console.error("ASSIGN ERROR:", assignError);
+        }
+    }
+
+    return res.json({ success: true, activity });
+}
 }
