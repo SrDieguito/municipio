@@ -7,7 +7,7 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
 
-    try {
+    try {const { title, description, start_time, end_time, user_id, people_ids } = body;
 
         // 🔹 PARSEAR BODY (FIX VERCEL)
         let body = req.body;
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
             console.log("BODY:", body);
 
             // ✅ FIX CLAVE: incluir people_ids
-            const { title, description, start_time, end_time, user_id, people_ids } = body;
+            const { title, description, start_time, end_time, user_id, people_names } = body;
 
             if (!title || !start_time || !end_time || !user_id) {
                 return res.status(400).json({ success: false, message: "Datos incompletos" });
@@ -70,9 +70,40 @@ export default async function handler(req, res) {
             }
 
             // ✅ 2. GUARDAR ENCARGADOS EN activity_assignments
-            if (people_ids && Array.isArray(people_ids) && people_ids.length > 0) {
+            if (people_names && Array.isArray(people_names) && people_names.length > 0) {
 
-                const assignments = people_ids.map(person_id => ({
+                let person_ids = [];
+
+                for (let name of people_names) {
+
+                    // 🔍 1. Buscar si ya existe
+                    const { data: existing } = await supabase
+                        .from('people')
+                        .select('*')
+                        .ilike('name', name)
+                        .maybeSingle();
+
+                    if (existing) {
+                        person_ids.push(existing.id);
+                    } else {
+                        // ➕ 2. Crear persona nueva
+                        const { data: newPerson, error } = await supabase
+                            .from('people')
+                            .insert([{ name }])
+                            .select()
+                            .single();
+
+                        if (error) {
+                            console.error("PERSON CREATE ERROR:", error);
+                            continue;
+                        }
+
+                        person_ids.push(newPerson.id);
+                    }
+                }
+
+                // 🔗 3. Crear asignaciones
+                const assignments = person_ids.map(person_id => ({
                     activity_id: activity.id,
                     person_id
                 }));
@@ -89,6 +120,15 @@ export default async function handler(req, res) {
                     });
                 }
             }
+
+                if (assignError) {
+                    console.error("ASSIGN ERROR:", assignError);
+                    return res.status(500).json({
+                        success: false,
+                        message: assignError.message
+                    });
+                }
+            
 
             return res.json({ success: true, activity });
         }
