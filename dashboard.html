@@ -18,8 +18,8 @@
 
 <body class="bg-gray-950 text-gray-200">
 
-<!-- NOTIFICACIÓN -->
-<div id="toast" class="fixed top-5 right-5 hidden px-5 py-3 rounded-lg bg-gray-800 border border-gray-700 shadow-lg"></div>
+<!-- TOAST -->
+<div id="toast" class="fixed top-5 right-5 hidden px-5 py-3 rounded-lg shadow-lg"></div>
 
 <div class="flex">
 
@@ -27,7 +27,7 @@
     <aside class="w-64 h-screen bg-gray-900 border-r border-gray-800 p-6 flex flex-col justify-between">
 
         <div>
-            <h2 class="text-2xl font-bold mb-10 tracking-wide">Checklist</h2>
+            <h2 class="text-2xl font-bold mb-10">Checklist</h2>
 
             <nav class="space-y-3">
                 <button onclick="loadActivities()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800 transition">
@@ -83,12 +83,23 @@
 
 <script>
 
-// TOAST MODERNO
+// 🔐 VALIDAR SESIÓN
+let user = JSON.parse(localStorage.getItem("user"));
+
+if (!user) {
+    window.location.href = "index.html";
+}
+
+
+// 🔔 TOAST
 function showToast(msg, error = false) {
     let toast = document.getElementById("toast");
+
     toast.innerText = msg;
     toast.className = `fixed top-5 right-5 px-5 py-3 rounded-lg shadow-lg fade-in ${
-        error ? 'bg-red-900 border border-red-700' : 'bg-gray-800 border border-gray-700'
+        error
+            ? 'bg-red-900 border border-red-700'
+            : 'bg-gray-800 border border-gray-700'
     }`;
 
     toast.style.display = "block";
@@ -99,8 +110,9 @@ function showToast(msg, error = false) {
 }
 
 
-// CREAR ACTIVIDAD
+// ➕ CREAR ACTIVIDAD
 async function createActivity() {
+
     let title = document.getElementById("title").value;
     let start = document.getElementById("start").value;
     let end = document.getElementById("end").value;
@@ -113,13 +125,24 @@ async function createActivity() {
         let res = await fetch('/api/activities', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, start_time: start, end_time: end })
+            body: JSON.stringify({
+                title,
+                start_time: start,
+                end_time: end,
+                user_id: user.id
+            })
         });
 
         let data = await res.json();
 
         if (data.success) {
             showToast("Actividad creada");
+
+            // limpiar inputs
+            document.getElementById("title").value = "";
+            document.getElementById("start").value = "";
+            document.getElementById("end").value = "";
+
             loadActivities();
         } else {
             showToast("Error al crear actividad", true);
@@ -131,13 +154,16 @@ async function createActivity() {
 }
 
 
-// CARGAR ACTIVIDADES
+// 📥 CARGAR ACTIVIDADES
 async function loadActivities() {
+
+    let container = document.getElementById("activities");
+    container.innerHTML = `<p class="text-gray-500">Cargando...</p>`;
+
     try {
         let res = await fetch('/api/activities');
         let data = await res.json();
 
-        let container = document.getElementById("activities");
         container.innerHTML = "";
 
         data.forEach(act => {
@@ -147,8 +173,26 @@ async function loadActivities() {
 
             div.innerHTML = `
                 <h3 class="text-xl font-semibold mb-2">${act.title}</h3>
-                <p class="text-sm text-gray-400 mb-1">Inicio: ${act.start_time}</p>
-                <p class="text-sm text-gray-400 mb-4">Fin: ${act.end_time}</p>
+
+                <p class="text-xs text-gray-500 mb-2">
+                    Creado por: ${act.users?.username || 'N/A'}
+                </p>
+
+                <p class="text-sm text-gray-400 mb-1">
+                    Inicio: ${new Date(act.start_time).toLocaleString()}
+                </p>
+
+                <p class="text-sm text-gray-400 mb-3">
+                    Fin: ${new Date(act.end_time).toLocaleString()}
+                </p>
+
+                <p class="text-xs text-gray-500 mb-3">
+                    Personas: ${
+                        act.activity_assignments?.length
+                            ? act.activity_assignments.map(a => a.people.name).join(', ')
+                            : 'Nadie'
+                    }
+                </p>
 
                 <button onclick="deleteActivity('${act.id}')"
                     class="text-sm text-gray-400 hover:text-red-400">
@@ -165,7 +209,7 @@ async function loadActivities() {
 }
 
 
-// ELIMINAR
+// 🗑 ELIMINAR
 async function deleteActivity(id) {
     try {
         let res = await fetch('/api/activities?id=' + id, {
@@ -187,20 +231,20 @@ async function deleteActivity(id) {
 }
 
 
-// HISTORIAL (placeholder)
+// 📜 HISTORIAL (placeholder)
 function loadHistory() {
     showToast("Historial próximamente");
 }
 
 
-// LOGOUT
+// 🚪 LOGOUT
 function logout() {
     localStorage.removeItem("user");
     window.location.href = "index.html";
 }
 
 
-// AUTO LOAD
+// 🚀 AUTOLOAD
 loadActivities();
 
 </script>
