@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+<body class="bg-gray-950 flex items-center justify-center h-screen">
+
+<div class="bg-gray-900 p-8 rounded-2xl shadow-xl w-80 animate-fade-in">
+    <h2 class="text-2xl font-bold text-center mb-6 text-white">Login</h2>
+
+    <input id="user" type="text" placeholder="Usuario"
+        class="w-full mb-4 p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-500">
+
+    <input id="pass" type="password" placeholder="Contraseña"
+        class="w-full mb-4 p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-500">
+
+    <button onclick="login()"
+        class="w-full bg-blue-500 hover:bg-blue-600 transition p-3 rounded-lg font-semibold">
+        Entrar
+    </button>
+</div>
+
+<script src="app.js">
+
+    async function login() {
+    let username = document.getElementById("user").value;
+    let password = document.getElementById("pass").value;
+
+    let res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+    });
+
+    let data = await res.json();
+
+    if (data.success) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+        window.location.href = "dashboard.html";
+    } else {
+        alert("Credenciales incorrectas");
+    }
+}
+</script>
+
+</body>
+</html>

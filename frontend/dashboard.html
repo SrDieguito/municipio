@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+<body class="bg-gray-950 text-white">
+
+<div class="flex">
+
+    <!-- Sidebar -->
+    <aside class="w-64 h-screen bg-gray-900 border-r border-gray-800 p-5">
+        <h2 class="text-xl font-bold mb-6">Checklist</h2>
+
+        <nav class="space-y-3">
+            <button class="w-full text-left hover:text-blue-400">Actividades</button>
+            <button class="w-full text-left hover:text-blue-400">Historial</button>
+        </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-8">
+
+        <h1 class="text-3xl font-bold mb-6">Actividades</h1>
+
+        <!-- Crear actividad -->
+        <div class="bg-gray-900 p-6 rounded-2xl mb-6 border border-gray-800">
+
+            <div class="grid grid-cols-3 gap-4">
+                <input id="title" placeholder="Actividad"
+                    class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+
+                <input id="start" type="datetime-local"
+                    class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+
+                <input id="end" type="datetime-local"
+                    class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+            </div>
+
+            <button onclick="createActivity()"
+                class="mt-4 bg-blue-500 hover:bg-blue-600 px-6 py-2 rounded-lg">
+                Crear actividad
+            </button>
+        </div>
+
+        <!-- Lista -->
+        <div id="activities" class="grid md:grid-cols-2 gap-4"></div>
+
+    </main>
+
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
