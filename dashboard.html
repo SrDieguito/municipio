@@ -67,8 +67,13 @@
 
             </div>
 
+            <!-- 🔥 SELECT PERSONAS -->
+            <select id="peopleSelect" multiple
+                class="mt-4 p-3 bg-gray-800 rounded-lg border border-gray-700 w-full">
+            </select>
+
             <button onclick="createActivity()"
-                class="mt-4 bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg transition">
+                class="mt-4 bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg transition">
                 Crear actividad
             </button>
 
@@ -83,12 +88,9 @@
 
 <script>
 
-// 🔐 VALIDAR SESIÓN
+// 🔐 SESIÓN
 let user = JSON.parse(localStorage.getItem("user"));
-
-if (!user) {
-    window.location.href = "index.html";
-}
+if (!user) window.location.href = "index.html";
 
 
 // 🔔 TOAST
@@ -104,9 +106,25 @@ function showToast(msg, error = false) {
 
     toast.style.display = "block";
 
-    setTimeout(() => {
-        toast.style.display = "none";
-    }, 3000);
+    setTimeout(() => toast.style.display = "none", 3000);
+}
+
+
+// 👥 CARGAR PERSONAS
+async function loadPeople() {
+    try {
+        let res = await fetch('/api/people');
+        let data = await res.json();
+
+        let select = document.getElementById("peopleSelect");
+
+        select.innerHTML = data.map(p =>
+            `<option value="${p.id}">${p.name} (${p.role || 'Sin rol'})</option>`
+        ).join('');
+
+    } catch {
+        showToast("Error cargando personas", true);
+    }
 }
 
 
@@ -116,6 +134,9 @@ async function createActivity() {
     let title = document.getElementById("title").value;
     let start = document.getElementById("start").value;
     let end = document.getElementById("end").value;
+
+    let selectedPeople = [...document.getElementById("peopleSelect").selectedOptions]
+        .map(o => o.value);
 
     if (!title || !start || !end) {
         return showToast("Completa todos los campos", true);
@@ -129,7 +150,8 @@ async function createActivity() {
                 title,
                 start_time: start,
                 end_time: end,
-                user_id: user.id
+                user_id: user.id,
+                people_ids: selectedPeople
             })
         });
 
@@ -138,17 +160,17 @@ async function createActivity() {
         if (data.success) {
             showToast("Actividad creada");
 
-            // limpiar inputs
             document.getElementById("title").value = "";
             document.getElementById("start").value = "";
             document.getElementById("end").value = "";
+            document.getElementById("peopleSelect").selectedIndex = -1;
 
             loadActivities();
         } else {
             showToast("Error al crear actividad", true);
         }
 
-    } catch (e) {
+    } catch {
         showToast("Error del servidor", true);
     }
 }
@@ -169,7 +191,7 @@ async function loadActivities() {
         data.forEach(act => {
 
             let div = document.createElement("div");
-            div.className = "bg-gray-900 p-5 rounded-2xl border border-gray-800 fade-in";
+            div.className = "bg-gray-900 p-5 rounded-2xl border border-gray-800 fade-in hover:scale-105 transition";
 
             div.innerHTML = `
                 <h3 class="text-xl font-semibold mb-2">${act.title}</h3>
@@ -186,20 +208,22 @@ async function loadActivities() {
                     Fin: ${new Date(act.end_time).toLocaleString()}
                 </p>
 
-                <p class="text-xs text-gray-500 mb-3">
-                    Personas: ${
+                <p class="text-xs text-blue-400 mb-3">
+                    ${
                         act.activity_assignments && act.activity_assignments.length > 0
                             ? act.activity_assignments
                                 .map(a => a.people?.name || 'Sin nombre')
                                 .join(', ')
-                            : 'Nadie'
+                            : 'Sin asignar'
                     }
                 </p>
 
-                <button onclick="deleteActivity('${act.id}')"
-                    class="text-sm text-gray-400 hover:text-red-400">
-                    Eliminar
-                </button>
+                <div class="flex justify-between items-center">
+                    <button onclick="deleteActivity('${act.id}')"
+                        class="text-sm text-red-400 hover:text-red-300">
+                        Eliminar
+                    </button>
+                </div>
             `;
 
             container.appendChild(div);
@@ -233,7 +257,7 @@ async function deleteActivity(id) {
 }
 
 
-// 📜 HISTORIAL (placeholder)
+// 📜 HISTORIAL
 function loadHistory() {
     showToast("Historial próximamente");
 }
@@ -246,7 +270,8 @@ function logout() {
 }
 
 
-// 🚀 AUTOLOAD
+// 🚀 INIT
+loadPeople();
 loadActivities();
 
 </script>
