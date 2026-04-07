@@ -18,70 +18,66 @@
 
 <body class="bg-gray-950 text-gray-200">
 
-<!-- TOAST -->
 <div id="toast" class="fixed top-5 right-5 hidden px-5 py-3 rounded-lg shadow-lg"></div>
 
 <div class="flex">
 
-    <!-- SIDEBAR -->
-    <aside class="w-64 h-screen bg-gray-900 border-r border-gray-800 p-6 flex flex-col justify-between">
+<aside class="w-64 h-screen bg-gray-900 border-r border-gray-800 p-6 flex flex-col justify-between">
+    <div>
+        <h2 class="text-2xl font-bold mb-10">Checklist</h2>
 
-        <div>
-            <h2 class="text-2xl font-bold mb-10">Checklist</h2>
+        <nav class="space-y-3">
+            <button onclick="loadActivities()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800">
+                Actividades
+            </button>
 
-            <nav class="space-y-3">
-                <button onclick="loadActivities()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800 transition">
-                    Actividades
-                </button>
+            <button onclick="loadHistory()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800">
+                Historial
+            </button>
+        </nav>
+    </div>
 
-                <button onclick="loadHistory()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800 transition">
-                    Historial
-                </button>
-            </nav>
-        </div>
+    <button onclick="logout()" class="text-sm text-gray-400 hover:text-white">
+        Cerrar sesión
+    </button>
+</aside>
 
-        <button onclick="logout()" class="text-sm text-gray-400 hover:text-white">
-            Cerrar sesión
-        </button>
+<main class="flex-1 p-10">
 
-    </aside>
+<h1 class="text-3xl font-bold mb-8">Actividades</h1>
 
-    <!-- MAIN -->
-    <main class="flex-1 p-10">
+<div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 mb-8 fade-in">
 
-        <h1 class="text-3xl font-bold mb-8">Actividades</h1>
+<div class="grid md:grid-cols-2 gap-4">
 
-        <!-- CREAR -->
-        <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 mb-8 fade-in">
+<input id="title" placeholder="Título"
+class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full">
 
-            <div class="grid md:grid-cols-3 gap-4">
-                <input id="title" placeholder="Título"
-                class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full">
+<textarea id="description" placeholder="Descripción"
+class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full"></textarea>
 
-                <textarea id="description" placeholder="Descripción de la actividad"
-                class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full mt-3"></textarea>
+<!-- ✅ SELECT REAL DE PERSONAS -->
+<select id="peopleSelect" multiple
+class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full h-32">
+</select>
 
-                <input id="people" placeholder="Encargados (ej: Juan, Pedro, Luis)"
-                class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full mt-3">
+<input type="datetime-local" id="start"
+class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full">
 
-                <input type="datetime-local" id="start"
-                class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full mt-3">
+<input type="datetime-local" id="end"
+class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full">
 
-                <input type="datetime-local" id="end"
-                class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full mt-3">
+<button onclick="createActivity()"
+class="bg-blue-600 px-4 py-2 rounded-lg">
+Crear actividad
+</button>
 
-                <button onclick="createActivity()"
-                class="mt-4 bg-blue-600 px-4 py-2 rounded-lg">
-                    Crear actividad
-                </button>
+</div>
+</div>
 
-        </div>
+<div id="activities" class="grid md:grid-cols-2 gap-5"></div>
 
-        <!-- LISTA -->
-        <div id="activities" class="grid md:grid-cols-2 gap-5"></div>
-
-    </main>
-
+</main>
 </div>
 
 <script>
@@ -90,96 +86,75 @@
 let user = JSON.parse(localStorage.getItem("user"));
 if (!user) window.location.href = "index.html";
 
-
 // 🔔 TOAST
 function showToast(msg, error = false) {
     let toast = document.getElementById("toast");
 
     toast.innerText = msg;
     toast.className = `fixed top-5 right-5 px-5 py-3 rounded-lg shadow-lg fade-in ${
-        error
-            ? 'bg-red-900 border border-red-700'
-            : 'bg-gray-800 border border-gray-700'
+        error ? 'bg-red-900 border border-red-700' : 'bg-gray-800 border border-gray-700'
     }`;
 
     toast.style.display = "block";
-
     setTimeout(() => toast.style.display = "none", 3000);
 }
 
-
 // 👥 CARGAR PERSONAS
 async function loadPeople() {
-    try {
-        let res = await fetch('/api/people');
-        let data = await res.json();
+    let res = await fetch('/api/people');
+    let data = await res.json();
 
-        let select = document.getElementById("peopleSelect");
+    let select = document.getElementById("peopleSelect");
 
-        select.innerHTML = data.map(p =>
-            `<option value="${p.id}">${p.name} (${p.role || 'Sin rol'})</option>`
-        ).join('');
-
-    } catch {
-        showToast("Error cargando personas", true);
-    }
+    select.innerHTML = data.map(p =>
+        `<option value="${p.id}">${p.name} (${p.role || 'Sin rol'})</option>`
+    ).join('');
 }
-
 
 // ➕ CREAR ACTIVIDAD
 async function createActivity() {
 
     let title = document.getElementById("title").value;
     let description = document.getElementById("description").value;
-    let people = document.getElementById("people").value;
     let start = document.getElementById("start").value;
     let end = document.getElementById("end").value;
 
-    if (!title || !description || !start || !end) {
-        return showToast("Completa todos los campos", true);
+    let people_ids = Array.from(
+        document.getElementById("peopleSelect").selectedOptions
+    ).map(o => o.value);
+
+    if (!title || !start || !end) {
+        return showToast("Completa los campos", true);
     }
 
-    // 🔥 concatenar encargados en descripción
-    let fullDescription = `
-${description}
+    let res = await fetch('/api/activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            title,
+            description,
+            start_time: start,
+            end_time: end,
+            user_id: user.id,
+            people_ids
+        })
+    });
 
-Encargados: ${people || 'No asignados'}
-`;
+    let data = await res.json();
 
-    try {
-        let res = await fetch('/api/activities', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                title,
-                description: fullDescription,
-                start_time: start,
-                end_time: end,
-                user_id: user.id
-            })
-        });
+    if (data.success) {
+        showToast("Actividad creada");
 
-        let data = await res.json();
+        document.getElementById("title").value = "";
+        document.getElementById("description").value = "";
+        document.getElementById("start").value = "";
+        document.getElementById("end").value = "";
 
-        if (data.success) {
-            showToast("Actividad creada");
-
-            document.getElementById("title").value = "";
-            document.getElementById("description").value = "";
-            document.getElementById("people").value = "";
-            document.getElementById("start").value = "";
-            document.getElementById("end").value = "";
-
-            loadActivities();
-        } else {
-            showToast("Error al crear actividad", true);
-        }
-
-    } catch {
-        showToast("Error del servidor", true);
+        loadActivities();
+    } else {
+        showToast("Error", true);
     }
 }
-
 
 // 📥 CARGAR ACTIVIDADES
 async function loadActivities() {
@@ -187,104 +162,80 @@ async function loadActivities() {
     let container = document.getElementById("activities");
     container.innerHTML = `<p class="text-gray-500">Cargando...</p>`;
 
-    try {
-        let res = await fetch('/api/activities');
-        let data = await res.json();
+    let res = await fetch('/api/activities');
+    let data = await res.json();
 
-        container.innerHTML = "";
+    container.innerHTML = "";
 
-        data.forEach(act => {
+    data.forEach(act => {
 
-            let div = document.createElement("div");
-            div.className = "bg-gray-900 p-5 rounded-2xl border border-gray-800 fade-in hover:scale-105 transition";
+        let peopleHTML = act.activity_assignments?.length
+            ? act.activity_assignments.map(a =>
+                `<span class="text-xs bg-blue-600 px-2 py-1 rounded-full mr-1">
+                    ${a.people?.name}
+                </span>`
+              ).join('')
+            : '<span class="text-xs text-gray-500">Sin asignar</span>';
 
-            div.innerHTML = `
-    <h3 class="text-xl font-semibold mb-2">${act.title}</h3>
+        let div = document.createElement("div");
+        div.className = "bg-gray-900 p-5 rounded-2xl border border-gray-800 fade-in";
 
-    <!-- 🔥 AQUÍ VA -->
-    <p class="text-sm text-gray-400 mb-3 whitespace-pre-line">
-        ${act.description || 'Sin descripción'}
-    </p>
+        div.innerHTML = `
+            <h3 class="text-xl font-semibold mb-2">${act.title}</h3>
 
-    <p class="text-xs text-gray-500 mb-2">
-        Creado por: ${act.users?.username || 'N/A'}
-    </p>
+            <!-- ✅ AQUÍ VA TU P CORRECTO -->
+            <p class="text-sm text-gray-400 mb-3 whitespace-pre-line">
+                ${act.description || 'Sin descripción'}
+            </p>
 
-    <p class="text-sm text-gray-400 mb-1">
-        Inicio: ${new Date(act.start_time).toLocaleString()}
-    </p>
+            <div class="mb-3">${peopleHTML}</div>
 
-    <p class="text-sm text-gray-400 mb-3">
-        Fin: ${new Date(act.end_time).toLocaleString()}
-    </p>
+            <p class="text-xs text-gray-500 mb-2">
+                Creado por: ${act.users?.username || 'N/A'}
+            </p>
 
-    <!-- ❌ ESTO YA NO LO NECESITAS -->
-    <!-- Puedes eliminarlo si ya no usas people de la BD -->
-    <!--
-    <p class="text-xs text-blue-400 mb-3">
-        ${
-            act.activity_assignments && act.activity_assignments.length > 0
-                ? act.activity_assignments
-                    .map(a => a.people?.name || 'Sin nombre')
-                    .join(', ')
-                : 'Sin asignar'
-        }
-    </p>
-    -->
+            <p class="text-sm text-gray-400">
+                Inicio: ${new Date(act.start_time).toLocaleString()}
+            </p>
 
-    <div class="flex justify-between items-center">
-        <button onclick="deleteActivity('${act.id}')"
+            <p class="text-sm text-gray-400 mb-3">
+                Fin: ${new Date(act.end_time).toLocaleString()}
+            </p>
+
+            <button onclick="deleteActivity('${act.id}')"
             class="text-sm text-red-400 hover:text-red-300">
-            Eliminar
-        </button>
-    </div>
-            `;
+                Eliminar
+            </button>
+        `;
 
-            container.appendChild(div);
-        });
-
-    } catch {
-        showToast("Error cargando actividades", true);
-    }
+        container.appendChild(div);
+    });
 }
-
 
 // 🗑 ELIMINAR
 async function deleteActivity(id) {
-    try {
-        let res = await fetch('/api/activities?id=' + id, {
-            method: 'DELETE'
-        });
+    let res = await fetch('/api/activities?id=' + id, { method: 'DELETE' });
+    let data = await res.json();
 
-        let data = await res.json();
-
-        if (data.success) {
-            showToast("Eliminado");
-            loadActivities();
-        } else {
-            showToast("Error eliminando", true);
-        }
-
-    } catch {
-        showToast("Error del servidor", true);
+    if (data.success) {
+        showToast("Eliminado");
+        loadActivities();
+    } else {
+        showToast("Error", true);
     }
 }
 
-
-// 📜 HISTORIAL
+// OTROS
 function loadHistory() {
     showToast("Historial próximamente");
 }
 
-
-// 🚪 LOGOUT
 function logout() {
     localStorage.removeItem("user");
     window.location.href = "index.html";
 }
 
-
-// 🚀 INIT
+// INIT
 loadPeople();
 loadActivities();
 
