@@ -7,23 +7,23 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 </head>
-<body class="bg-gray-950 flex items-center justify-center h-screen overflow-hidden">
+<body class="bg-black flex items-center justify-center h-screen overflow-hidden">
 
-<!-- Fondo animado -->
-<div class="absolute w-full h-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 animate-pulse opacity-50"></div>
+<!-- Fondo sutil -->
+<div class="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black opacity-80"></div>
 
 <!-- Card -->
-<div class="relative bg-gray-900/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl w-80 border border-gray-800 transition duration-500 hover:scale-105">
+<div class="relative bg-gray-900/70 backdrop-blur-xl p-8 rounded-2xl shadow-2xl w-80 border border-gray-800 transition duration-500 hover:scale-105">
 
-    <h2 class="text-2xl font-bold text-center mb-6 text-white tracking-wide">
+    <h2 class="text-2xl font-bold text-center mb-6 text-gray-100 tracking-wide">
         Iniciar sesión
     </h2>
 
     <input id="user" type="text" placeholder="Usuario"
-        class="w-full mb-4 p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600 transition">
+        class="w-full mb-4 p-3 rounded-lg bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 transition">
 
     <input id="pass" type="password" placeholder="Contraseña"
-        class="w-full mb-4 p-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-600 transition">
+        class="w-full mb-4 p-3 rounded-lg bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 transition">
 
     <button id="btnLogin" onclick="login()"
         class="w-full bg-gray-800 hover:bg-gray-700 transition p-3 rounded-lg font-semibold flex items-center justify-center gap-2">
@@ -31,7 +31,7 @@
         <span id="btnText">Entrar</span>
 
         <!-- Loader -->
-        <svg id="loader" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <svg id="loader" class="hidden animate-spin h-5 w-5 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor"
                 d="M4 12a8 8 0 018-8v8H4z"></path>
@@ -41,22 +41,19 @@
 
 </div>
 
-<!-- Toast -->
+<!-- Toast elegante (gris, sin colores) -->
 <div id="toast"
-    class="fixed bottom-5 right-5 bg-red-500 text-white px-5 py-3 rounded-lg shadow-lg opacity-0 translate-y-5 transition duration-300">
+    class="fixed bottom-5 right-5 bg-gray-800 text-gray-200 px-5 py-3 rounded-lg shadow-lg opacity-0 translate-y-5 transition duration-300 border border-gray-700">
 </div>
 
 <script>
-function showToast(message, success = false) {
+function showToast(message) {
     const toast = document.getElementById("toast");
 
     toast.innerText = message;
+
     toast.classList.remove("opacity-0", "translate-y-5");
-
     toast.classList.add("opacity-100", "translate-y-0");
-
-    toast.classList.remove("bg-red-500", "bg-green-500");
-    toast.classList.add(success ? "bg-green-500" : "bg-red-500");
 
     setTimeout(() => {
         toast.classList.remove("opacity-100", "translate-y-0");
@@ -72,7 +69,6 @@ async function login() {
     const text = document.getElementById("btnText");
     const loader = document.getElementById("loader");
 
-    // Estado loading
     text.innerText = "Entrando...";
     loader.classList.remove("hidden");
     btn.disabled = true;
@@ -87,22 +83,21 @@ async function login() {
         let data = await res.json();
 
         if (data.success) {
-            showToast("Bienvenido 👋", true);
+            showToast("Acceso concedido");
 
             setTimeout(() => {
                 localStorage.setItem("user", JSON.stringify(data.user));
                 window.location.href = "dashboard.html";
-            }, 1000);
+            }, 800);
 
         } else {
             showToast("Credenciales incorrectas");
         }
 
     } catch (err) {
-        showToast("Error de conexión con el servidor");
+        showToast("Error del servidor");
     }
 
-    // Reset botón
     text.innerText = "Entrar";
     loader.classList.add("hidden");
     btn.disabled = false;
