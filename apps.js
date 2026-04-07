@@ -1,9 +1,10 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
 const supabase = createClient(
-    'https://TU_URL.supabase.co',
-    'TU_ANON_KEY'
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
 );
+
 
 async function login() {
     let username = document.getElementById("user").value;
