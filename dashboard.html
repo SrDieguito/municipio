@@ -188,8 +188,10 @@ async function loadActivities() {
 
                 <p class="text-xs text-gray-500 mb-3">
                     Personas: ${
-                        act.activity_assignments?.length
-                            ? act.activity_assignments.map(a => a.people.name).join(', ')
+                        act.activity_assignments && act.activity_assignments.length > 0
+                            ? act.activity_assignments
+                                .map(a => a.people?.name || 'Sin nombre')
+                                .join(', ')
                             : 'Nadie'
                     }
                 </p>

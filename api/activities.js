@@ -21,7 +21,14 @@ export default async function handler(req, res) {
 
             const { data, error } = await supabase
                 .from('activities')
-                .select('*') // 🔥 simplificado para evitar errores de relaciones
+                .select(`
+                    *,
+                    users:created_by (id, username),
+                    activity_assignments (
+                        id,
+                        people (id, name, role)
+                    )
+                `)
                 .order('created_at', { ascending: false });
 
             if (error) {
