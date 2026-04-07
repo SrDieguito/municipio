@@ -6,54 +6,204 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 
+<style>
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.4s ease; }
+</style>
+
 </head>
-<body class="bg-gray-950 text-white">
+
+<body class="bg-gray-950 text-gray-200">
+
+<!-- NOTIFICACIÓN -->
+<div id="toast" class="fixed top-5 right-5 hidden px-5 py-3 rounded-lg bg-gray-800 border border-gray-700 shadow-lg"></div>
 
 <div class="flex">
 
-    <!-- Sidebar -->
-    <aside class="w-64 h-screen bg-gray-900 border-r border-gray-800 p-5">
-        <h2 class="text-xl font-bold mb-6">Checklist</h2>
+    <!-- SIDEBAR -->
+    <aside class="w-64 h-screen bg-gray-900 border-r border-gray-800 p-6 flex flex-col justify-between">
 
-        <nav class="space-y-3">
-            <button class="w-full text-left hover:text-blue-400">Actividades</button>
-            <button class="w-full text-left hover:text-blue-400">Historial</button>
-        </nav>
+        <div>
+            <h2 class="text-2xl font-bold mb-10 tracking-wide">Checklist</h2>
+
+            <nav class="space-y-3">
+                <button onclick="loadActivities()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800 transition">
+                    Actividades
+                </button>
+
+                <button onclick="loadHistory()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-800 transition">
+                    Historial
+                </button>
+            </nav>
+        </div>
+
+        <button onclick="logout()" class="text-sm text-gray-400 hover:text-white">
+            Cerrar sesión
+        </button>
+
     </aside>
 
-    <!-- Main -->
-    <main class="flex-1 p-8">
+    <!-- MAIN -->
+    <main class="flex-1 p-10">
 
-        <h1 class="text-3xl font-bold mb-6">Actividades</h1>
+        <h1 class="text-3xl font-bold mb-8">Actividades</h1>
 
-        <!-- Crear actividad -->
-        <div class="bg-gray-900 p-6 rounded-2xl mb-6 border border-gray-800">
+        <!-- CREAR -->
+        <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 mb-8 fade-in">
 
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid md:grid-cols-3 gap-4">
+
                 <input id="title" placeholder="Actividad"
-                    class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+                    class="p-3 bg-gray-800 rounded-lg border border-gray-700 focus:outline-none focus:border-gray-500">
 
                 <input id="start" type="datetime-local"
                     class="p-3 bg-gray-800 rounded-lg border border-gray-700">
 
                 <input id="end" type="datetime-local"
                     class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+
             </div>
 
             <button onclick="createActivity()"
-                class="mt-4 bg-blue-500 hover:bg-blue-600 px-6 py-2 rounded-lg">
+                class="mt-4 bg-gray-700 hover:bg-gray-600 px-6 py-2 rounded-lg transition">
                 Crear actividad
             </button>
+
         </div>
 
-        <!-- Lista -->
-        <div id="activities" class="grid md:grid-cols-2 gap-4"></div>
+        <!-- LISTA -->
+        <div id="activities" class="grid md:grid-cols-2 gap-5"></div>
 
     </main>
 
 </div>
 
-<script src="app.js"></script>
+<script>
+
+// TOAST MODERNO
+function showToast(msg, error = false) {
+    let toast = document.getElementById("toast");
+    toast.innerText = msg;
+    toast.className = `fixed top-5 right-5 px-5 py-3 rounded-lg shadow-lg fade-in ${
+        error ? 'bg-red-900 border border-red-700' : 'bg-gray-800 border border-gray-700'
+    }`;
+
+    toast.style.display = "block";
+
+    setTimeout(() => {
+        toast.style.display = "none";
+    }, 3000);
+}
+
+
+// CREAR ACTIVIDAD
+async function createActivity() {
+    let title = document.getElementById("title").value;
+    let start = document.getElementById("start").value;
+    let end = document.getElementById("end").value;
+
+    if (!title || !start || !end) {
+        return showToast("Completa todos los campos", true);
+    }
+
+    try {
+        let res = await fetch('/api/activities', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, start_time: start, end_time: end })
+        });
+
+        let data = await res.json();
+
+        if (data.success) {
+            showToast("Actividad creada");
+            loadActivities();
+        } else {
+            showToast("Error al crear actividad", true);
+        }
+
+    } catch (e) {
+        showToast("Error del servidor", true);
+    }
+}
+
+
+// CARGAR ACTIVIDADES
+async function loadActivities() {
+    try {
+        let res = await fetch('/api/activities');
+        let data = await res.json();
+
+        let container = document.getElementById("activities");
+        container.innerHTML = "";
+
+        data.forEach(act => {
+
+            let div = document.createElement("div");
+            div.className = "bg-gray-900 p-5 rounded-2xl border border-gray-800 fade-in";
+
+            div.innerHTML = `
+                <h3 class="text-xl font-semibold mb-2">${act.title}</h3>
+                <p class="text-sm text-gray-400 mb-1">Inicio: ${act.start_time}</p>
+                <p class="text-sm text-gray-400 mb-4">Fin: ${act.end_time}</p>
+
+                <button onclick="deleteActivity('${act.id}')"
+                    class="text-sm text-gray-400 hover:text-red-400">
+                    Eliminar
+                </button>
+            `;
+
+            container.appendChild(div);
+        });
+
+    } catch {
+        showToast("Error cargando actividades", true);
+    }
+}
+
+
+// ELIMINAR
+async function deleteActivity(id) {
+    try {
+        let res = await fetch('/api/activities?id=' + id, {
+            method: 'DELETE'
+        });
+
+        let data = await res.json();
+
+        if (data.success) {
+            showToast("Eliminado");
+            loadActivities();
+        } else {
+            showToast("Error eliminando", true);
+        }
+
+    } catch {
+        showToast("Error del servidor", true);
+    }
+}
+
+
+// HISTORIAL (placeholder)
+function loadHistory() {
+    showToast("Historial próximamente");
+}
+
+
+// LOGOUT
+function logout() {
+    localStorage.removeItem("user");
+    window.location.href = "index.html";
+}
+
+
+// AUTO LOAD
+loadActivities();
+
+</script>
 
 </body>
 </html>
