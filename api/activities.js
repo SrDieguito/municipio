@@ -1,13 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_ANON_KEY
 );
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
 
-    // 🔹 GET - LISTAR ACTIVIDADES CON RELACIONES
+    // 🔹 GET
     if (req.method === 'GET') {
 
         const { data, error } = await supabase
@@ -29,17 +29,16 @@ export default async function handler(req, res) {
         return res.json(data);
     }
 
-    // 🔹 POST - CREAR ACTIVIDAD
+    // 🔹 POST
     if (req.method === 'POST') {
 
-        const { title, start_time, end_time, user_id, people_ids } = req.body;
+        const { title, start_time, end_time, user_id } = req.body;
 
         if (!title || !start_time || !end_time || !user_id) {
             return res.status(400).json({ success: false });
         }
 
-        // 1. Crear actividad
-        const { data: activity, error: errorActivity } = await supabase
+        const { data: activity, error } = await supabase
             .from('activities')
             .insert([{
                 title,
@@ -51,21 +50,8 @@ export default async function handler(req, res) {
             .select()
             .single();
 
-        if (errorActivity) {
-            return res.status(500).json({ success: false, error: errorActivity });
-        }
-
-        // 2. Asignar personas (si vienen)
-        if (people_ids && people_ids.length > 0) {
-
-            const assignments = people_ids.map(person_id => ({
-                activity_id: activity.id,
-                person_id
-            }));
-
-            await supabase
-                .from('activity_assignments')
-                .insert(assignments);
+        if (error) {
+            return res.status(500).json({ success: false, error });
         }
 
         return res.json({ success: true, activity });
@@ -80,23 +66,10 @@ export default async function handler(req, res) {
             return res.status(400).json({ success: false });
         }
 
-        // borrar relaciones primero (buena práctica)
-        await supabase
-            .from('activity_assignments')
-            .delete()
-            .eq('activity_id', id);
+        await supabase.from('activity_assignments').delete().eq('activity_id', id);
+        await supabase.from('activity_logs').delete().eq('activity_id', id);
+        await supabase.from('activity_history').delete().eq('activity_id', id);
 
-        await supabase
-            .from('activity_logs')
-            .delete()
-            .eq('activity_id', id);
-
-        await supabase
-            .from('activity_history')
-            .delete()
-            .eq('activity_id', id);
-
-        // borrar actividad
         const { error } = await supabase
             .from('activities')
             .delete()
@@ -110,4 +83,4 @@ export default async function handler(req, res) {
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
-}
+};
