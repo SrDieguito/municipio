@@ -55,27 +55,25 @@
         <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 mb-8 fade-in">
 
             <div class="grid md:grid-cols-3 gap-4">
+                <input id="title" placeholder="Título"
+                class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full">
 
-                <input id="title" placeholder="Actividad"
-                    class="p-3 bg-gray-800 rounded-lg border border-gray-700 focus:outline-none focus:border-gray-500">
+                <textarea id="description" placeholder="Descripción de la actividad"
+                class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full mt-3"></textarea>
 
-                <input id="start" type="datetime-local"
-                    class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+                <input id="people" placeholder="Encargados (ej: Juan, Pedro, Luis)"
+                class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full mt-3">
 
-                <input id="end" type="datetime-local"
-                    class="p-3 bg-gray-800 rounded-lg border border-gray-700">
+                <input type="datetime-local" id="start"
+                class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full mt-3">
 
-            </div>
+                <input type="datetime-local" id="end"
+                class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full mt-3">
 
-            <!-- 🔥 SELECT PERSONAS -->
-            <select id="peopleSelect" multiple
-                class="mt-4 p-3 bg-gray-800 rounded-lg border border-gray-700 w-full">
-            </select>
-
-            <button onclick="createActivity()"
-                class="mt-4 bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg transition">
-                Crear actividad
-            </button>
+                <button onclick="createActivity()"
+                class="mt-4 bg-blue-600 px-4 py-2 rounded-lg">
+                    Crear actividad
+                </button>
 
         </div>
 
@@ -132,15 +130,21 @@ async function loadPeople() {
 async function createActivity() {
 
     let title = document.getElementById("title").value;
+    let description = document.getElementById("description").value;
+    let people = document.getElementById("people").value;
     let start = document.getElementById("start").value;
     let end = document.getElementById("end").value;
 
-    let selectedPeople = [...document.getElementById("peopleSelect").selectedOptions]
-        .map(o => o.value);
-
-    if (!title || !start || !end) {
+    if (!title || !description || !start || !end) {
         return showToast("Completa todos los campos", true);
     }
+
+    // 🔥 concatenar encargados en descripción
+    let fullDescription = `
+${description}
+
+Encargados: ${people || 'No asignados'}
+`;
 
     try {
         let res = await fetch('/api/activities', {
@@ -148,10 +152,10 @@ async function createActivity() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 title,
+                description: fullDescription,
                 start_time: start,
                 end_time: end,
-                user_id: user.id,
-                people_ids: selectedPeople
+                user_id: user.id
             })
         });
 
@@ -161,9 +165,10 @@ async function createActivity() {
             showToast("Actividad creada");
 
             document.getElementById("title").value = "";
+            document.getElementById("description").value = "";
+            document.getElementById("people").value = "";
             document.getElementById("start").value = "";
             document.getElementById("end").value = "";
-            document.getElementById("peopleSelect").selectedIndex = -1;
 
             loadActivities();
         } else {
@@ -194,36 +199,45 @@ async function loadActivities() {
             div.className = "bg-gray-900 p-5 rounded-2xl border border-gray-800 fade-in hover:scale-105 transition";
 
             div.innerHTML = `
-                <h3 class="text-xl font-semibold mb-2">${act.title}</h3>
+    <h3 class="text-xl font-semibold mb-2">${act.title}</h3>
 
-                <p class="text-xs text-gray-500 mb-2">
-                    Creado por: ${act.users?.username || 'N/A'}
-                </p>
+    <!-- 🔥 AQUÍ VA -->
+    <p class="text-sm text-gray-400 mb-3 whitespace-pre-line">
+        ${act.description || 'Sin descripción'}
+    </p>
 
-                <p class="text-sm text-gray-400 mb-1">
-                    Inicio: ${new Date(act.start_time).toLocaleString()}
-                </p>
+    <p class="text-xs text-gray-500 mb-2">
+        Creado por: ${act.users?.username || 'N/A'}
+    </p>
 
-                <p class="text-sm text-gray-400 mb-3">
-                    Fin: ${new Date(act.end_time).toLocaleString()}
-                </p>
+    <p class="text-sm text-gray-400 mb-1">
+        Inicio: ${new Date(act.start_time).toLocaleString()}
+    </p>
 
-                <p class="text-xs text-blue-400 mb-3">
-                    ${
-                        act.activity_assignments && act.activity_assignments.length > 0
-                            ? act.activity_assignments
-                                .map(a => a.people?.name || 'Sin nombre')
-                                .join(', ')
-                            : 'Sin asignar'
-                    }
-                </p>
+    <p class="text-sm text-gray-400 mb-3">
+        Fin: ${new Date(act.end_time).toLocaleString()}
+    </p>
 
-                <div class="flex justify-between items-center">
-                    <button onclick="deleteActivity('${act.id}')"
-                        class="text-sm text-red-400 hover:text-red-300">
-                        Eliminar
-                    </button>
-                </div>
+    <!-- ❌ ESTO YA NO LO NECESITAS -->
+    <!-- Puedes eliminarlo si ya no usas people de la BD -->
+    <!--
+    <p class="text-xs text-blue-400 mb-3">
+        ${
+            act.activity_assignments && act.activity_assignments.length > 0
+                ? act.activity_assignments
+                    .map(a => a.people?.name || 'Sin nombre')
+                    .join(', ')
+                : 'Sin asignar'
+        }
+    </p>
+    -->
+
+    <div class="flex justify-between items-center">
+        <button onclick="deleteActivity('${act.id}')"
+            class="text-sm text-red-400 hover:text-red-300">
+            Eliminar
+        </button>
+    </div>
             `;
 
             container.appendChild(div);

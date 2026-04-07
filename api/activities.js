@@ -43,7 +43,7 @@ export default async function handler(req, res) {
 
             console.log("BODY:", body);
 
-            const { title, start_time, end_time, user_id, people_ids } = body;
+            const { title, description, start_time, end_time, user_id } = body;
 
             if (!title || !start_time || !end_time || !user_id) {
                 return res.status(400).json({ success: false, message: "Datos incompletos" });
@@ -52,13 +52,14 @@ export default async function handler(req, res) {
             // ✅ 1. CREAR ACTIVIDAD
             const { data: activity, error } = await supabase
                 .from('activities')
-                .insert([{
-                    title,
-                    start_time,
-                    end_time,
-                    status: 'pending',
-                    created_by: user_id
-                }])
+            .insert([{
+                title,
+                description,
+                start_time,
+                end_time,
+                status: 'pending',
+                created_by: user_id
+            }])
                 .select()
                 .single();
 
