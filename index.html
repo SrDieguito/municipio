@@ -2,107 +2,277 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Login</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Syne', sans-serif; }
 
+  @keyframes floatUp {
+    0%   { transform: translateY(100vh) scale(0); opacity: 0; }
+    10%  { opacity: 0.3; }
+    90%  { opacity: 0.08; }
+    100% { transform: translateY(-20px) scale(1.2); opacity: 0; }
+  }
+  .particle {
+    position: absolute; border-radius: 50%;
+    background: rgba(160,160,160,0.12);
+    animation: floatUp linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes cardIn {
+    0%   { opacity: 0; transform: translateY(40px) scale(0.94); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .card-in { animation: cardIn 0.7s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+  @keyframes logoPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(150,150,150,0.12); }
+    50%       { box-shadow: 0 0 0 10px rgba(150,150,150,0); }
+  }
+  .logo-pulse { animation: logoPulse 2.5s ease-in-out infinite; }
+
+  @keyframes borderGlow {
+    0%, 100% { border-color: rgba(60,60,60,0.8); }
+    50%       { border-color: rgba(100,100,100,0.5); }
+  }
+  .border-anim { animation: borderGlow 3s ease-in-out infinite; }
+
+  .field-wrap { position: relative; }
+  .field-wrap input { transition: all 0.3s ease; background: #111; color: #d1d5db; border: 1px solid #2a2a2a; }
+  .field-wrap label {
+    position: absolute; left: 14px; top: 50%;
+    transform: translateY(-50%);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem; letter-spacing: 0.08em;
+    color: #4b5563; pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .field-wrap input:focus ~ label,
+  .field-wrap input:not(:placeholder-shown) ~ label {
+    top: 6px; transform: none;
+    font-size: 0.62rem; color: #6b7280; letter-spacing: 0.12em;
+  }
+  .field-wrap input:focus {
+    border-color: #4b4b4b !important;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(100,100,100,0.1);
+  }
+
+  @keyframes shimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+  }
+  .btn-shimmer { position: relative; overflow: hidden; }
+  .btn-shimmer::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.05) 50%, transparent 60%);
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes progressFill {
+    0%   { width: 0%; }
+    60%  { width: 75%; }
+    100% { width: 100%; }
+  }
+  .progress-bar { animation: progressFill 1.2s ease forwards; }
+
+  @keyframes toastIn {
+    0%   { opacity: 0; transform: translateY(16px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes toastOut {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(16px) scale(0.96); }
+  }
+  .toast-in  { animation: toastIn  0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
+  .toast-out { animation: toastOut 0.25s ease-in forwards; }
+
+  @keyframes glitch {
+    0%,94%,100% { text-shadow: none; }
+    95% { text-shadow: -2px 0 rgba(180,180,180,0.35), 2px 0 rgba(80,80,80,0.35); }
+    96% { text-shadow: 2px 0 rgba(160,160,160,0.25); }
+    97% { text-shadow: none; }
+    98% { text-shadow: -1px 0 rgba(140,140,140,0.2); }
+  }
+  .glitch-title { animation: glitch 5s steps(1) infinite; }
+
+  @keyframes lineExpand {
+    0%   { width: 0; opacity:0; }
+    100% { width: 100%; opacity:1; }
+  }
+  .line-expand { animation: lineExpand 0.7s 0.4s ease forwards; width: 0; opacity:0; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid #333;
+    border-top-color: #888;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
 </head>
-<body class="bg-black flex items-center justify-center h-screen overflow-hidden">
+<body style="background:#000; min-height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;">
 
-<!-- Fondo sutil -->
-<div class="absolute inset-0 bg-gradient-to-br from-black via-gray-900 to-black opacity-80"></div>
+<!-- Partículas -->
+<div id="particles" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
-<!-- Card -->
-<div class="relative bg-gray-900/70 backdrop-blur-xl p-8 rounded-2xl shadow-2xl w-80 border border-gray-800 transition duration-500 hover:scale-105">
+<!-- Fondo: neblina radial suave, sin cuadrícula -->
+<div class="absolute inset-0 pointer-events-none" style="
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(35,35,35,0.55) 0%, transparent 70%),
+    radial-gradient(ellipse 35% 40% at 15% 85%, rgba(28,28,28,0.4) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 35% at 85% 10%, rgba(22,22,22,0.35) 0%, transparent 60%);
+"></div>
 
-    <h2 class="text-2xl font-bold text-center mb-6 text-gray-100 tracking-wide">
-        Iniciar sesión
-    </h2>
+<!-- Card wrapper -->
+<div class="card-in" style="position:relative; z-index:10; width:340px; margin:0 16px;">
 
-    <input id="user" type="text" placeholder="Usuario"
-        class="w-full mb-4 p-3 rounded-lg bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 transition">
+  <!-- Esquinas decorativas -->
+  <div style="position:absolute; top:-1px; left:-1px; width:18px; height:18px; border-top:1px solid #555; border-left:1px solid #555;"></div>
+  <div style="position:absolute; top:-1px; right:-1px; width:18px; height:18px; border-top:1px solid #555; border-right:1px solid #555;"></div>
+  <div style="position:absolute; bottom:-1px; left:-1px; width:18px; height:18px; border-bottom:1px solid #555; border-left:1px solid #555;"></div>
+  <div style="position:absolute; bottom:-1px; right:-1px; width:18px; height:18px; border-bottom:1px solid #555; border-right:1px solid #555;"></div>
 
-    <input id="pass" type="password" placeholder="Contraseña"
-        class="w-full mb-4 p-3 rounded-lg bg-gray-800 text-gray-200 border border-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 transition">
+  <!-- Card -->
+  <div class="border-anim" style="background:#0a0a0a; border:1px solid #222; border-radius:16px; padding:32px; position:relative; overflow:hidden; box-shadow: 0 0 80px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.03);">
 
-    <button id="btnLogin" onclick="login()"
-        class="w-full bg-gray-800 hover:bg-gray-700 transition p-3 rounded-lg font-semibold flex items-center justify-center gap-2">
+    <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:1px; background:linear-gradient(90deg, transparent, #555, transparent); opacity:0.4;"></div>
 
-        <span id="btnText">Entrar</span>
-
-        <!-- Loader -->
-        <svg id="loader" class="hidden animate-spin h-5 w-5 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8v8H4z"></path>
+    <!-- Logo -->
+    <div style="display:flex; justify-content:center; margin-bottom:24px;">
+      <div class="logo-pulse" style="width:44px; height:44px; border-radius:10px; background:#111; border:1px solid #2a2a2a; display:flex; align-items:center; justify-content:center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);">
+        <svg width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/>
         </svg>
+      </div>
+    </div>
 
+    <!-- Título -->
+    <div style="text-align:center; margin-bottom:4px;">
+      <h1 class="glitch-title" style="font-weight:800; letter-spacing:0.2em; color:#e5e7eb; font-size:1.1rem; text-transform:uppercase; margin:0;">ACCESO</h1>
+      <p style="font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:0.25em; color:#374151; text-transform:uppercase; margin:6px 0 0;">Sistema seguro</p>
+    </div>
+
+    <!-- Separador -->
+    <div style="display:flex; align-items:center; gap:10px; margin:20px 0;">
+      <div class="line-expand" style="height:1px; background:linear-gradient(to right, transparent, #2a2a2a); flex:1;"></div>
+      <div style="width:3px; height:3px; border-radius:50%; background:#2a2a2a;"></div>
+      <div class="line-expand" style="height:1px; background:linear-gradient(to left, transparent, #2a2a2a); flex:1;"></div>
+    </div>
+
+    <!-- Usuario -->
+    <div class="field-wrap" style="margin-bottom:10px;">
+      <input id="user" type="text" placeholder=" "
+        style="width:100%; padding:20px 12px 8px; border-radius:8px; font-family:'DM Mono',monospace; font-size:0.82rem; letter-spacing:0.04em;">
+      <label for="user">USUARIO</label>
+    </div>
+
+    <!-- Contraseña -->
+    <div class="field-wrap" style="margin-bottom:20px;">
+      <input id="pass" type="password" placeholder=" "
+        style="width:100%; padding:20px 12px 8px; border-radius:8px; font-family:'DM Mono',monospace; font-size:0.82rem; letter-spacing:0.04em;">
+      <label for="pass">CONTRASEÑA</label>
+    </div>
+
+    <!-- Progress -->
+    <div id="progressWrap" style="display:none; height:1px; background:#1a1a1a; border-radius:99px; overflow:hidden; margin-bottom:12px;">
+      <div id="progressBar" style="height:100%; background:linear-gradient(90deg,#333,#777,#333); border-radius:99px;"></div>
+    </div>
+
+    <!-- Botón -->
+    <button id="btnLogin" onclick="login()" class="btn-shimmer"
+      style="width:100%; padding:13px; border-radius:10px; font-family:'Syne',sans-serif; font-weight:700; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:#d1d5db; background:linear-gradient(135deg,#1a1a1a,#252525,#181818); border:1px solid #333; cursor:pointer; transition:all 0.25s ease; box-shadow:0 2px 20px rgba(0,0,0,0.6);">
+      <span id="btnContent" style="display:flex; align-items:center; justify-content:center; gap:10px;">
+        Entrar
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
+        </svg>
+      </span>
+      <span id="loaderContent" style="display:none; align-items:center; justify-content:center; gap:10px;">
+        <div class="spinner"></div>
+        <span style="font-family:'DM Mono',monospace; color:#6b7280; font-size:0.72rem;">Verificando...</span>
+      </span>
     </button>
 
+    <p style="text-align:center; margin-top:18px; font-family:'DM Mono',monospace; font-size:0.65rem; letter-spacing:0.12em; color:#374151;">
+      ¿Olvidaste tu acceso?
+      <span style="color:#6b7280; cursor:pointer; transition:color 0.2s;"
+        onmouseover="this.style.color='#9ca3af'" onmouseout="this.style.color='#6b7280'">Recuperar</span>
+    </p>
+
+    <div style="position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:80px; height:1px; background:linear-gradient(90deg,transparent,#333,transparent); opacity:0.4;"></div>
+  </div>
 </div>
 
-<!-- Toast elegante (gris, sin colores) -->
-<div id="toast"
-    class="fixed bottom-5 right-5 bg-gray-800 text-gray-200 px-5 py-3 rounded-lg shadow-lg opacity-0 translate-y-5 transition duration-300 border border-gray-700">
+<!-- Toast -->
+<div id="toast" style="position:fixed; bottom:24px; right:24px; z-index:100; display:none; pointer-events:none;">
+  <div id="toastInner" style="display:flex; align-items:center; gap:10px; padding:10px 16px; border-radius:10px; border:1px solid #2a2a2a; background:#0d0d0d; box-shadow:0 20px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03);">
+    <div style="width:5px; height:5px; border-radius:50%; background:#555; flex-shrink:0;"></div>
+    <span id="toastMsg" style="font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.08em; color:#9ca3af;"></span>
+  </div>
 </div>
 
 <script>
-function showToast(message) {
-    const toast = document.getElementById("toast");
+(function() {
+  const c = document.getElementById('particles');
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const s = Math.random() * 2.5 + 0.5;
+    p.style.cssText = `width:${s}px;height:${s}px;left:${Math.random()*100}%;bottom:-10px;animation-duration:${7+Math.random()*12}s;animation-delay:${Math.random()*10}s;`;
+    c.appendChild(p);
+  }
+})();
 
-    toast.innerText = message;
-
-    toast.classList.remove("opacity-0", "translate-y-5");
-    toast.classList.add("opacity-100", "translate-y-0");
-
-    setTimeout(() => {
-        toast.classList.remove("opacity-100", "translate-y-0");
-        toast.classList.add("opacity-0", "translate-y-5");
-    }, 3000);
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  const inner = document.getElementById('toastInner');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.style.display = 'block';
+  inner.className = inner.className.replace('toast-out','').trim();
+  void inner.offsetWidth;
+  inner.classList.add('toast-in');
+  setTimeout(() => {
+    inner.classList.remove('toast-in');
+    inner.classList.add('toast-out');
+    setTimeout(() => { toast.style.display = 'none'; }, 300);
+  }, 3000);
 }
 
 async function login() {
-    let username = document.getElementById("user").value;
-    let password = document.getElementById("pass").value;
+  const btn = document.getElementById('btnLogin');
+  const bc  = document.getElementById('btnContent');
+  const lc  = document.getElementById('loaderContent');
+  const pw  = document.getElementById('progressWrap');
+  const pb  = document.getElementById('progressBar');
 
-    const btn = document.getElementById("btnLogin");
-    const text = document.getElementById("btnText");
-    const loader = document.getElementById("loader");
+  bc.style.display = 'none'; lc.style.display = 'flex';
+  btn.disabled = true; btn.style.opacity = '0.7';
+  pw.style.display = 'block';
+  pb.classList.remove('progress-bar'); void pb.offsetWidth; pb.classList.add('progress-bar');
 
-    text.innerText = "Entrando...";
-    loader.classList.remove("hidden");
-    btn.disabled = true;
+  try {
+    const res  = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: document.getElementById('user').value, password: document.getElementById('pass').value }) });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Acceso concedido');
+      setTimeout(() => { localStorage.setItem('user', JSON.stringify(data.user)); window.location.href='dashboard.html'; }, 900);
+    } else { showToast('Credenciales incorrectas'); }
+  } catch { showToast('Error del servidor'); }
 
-    try {
-        let res = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-
-        let data = await res.json();
-
-        if (data.success) {
-            showToast("Acceso concedido");
-
-            setTimeout(() => {
-                localStorage.setItem("user", JSON.stringify(data.user));
-                window.location.href = "dashboard.html";
-            }, 800);
-
-        } else {
-            showToast("Credenciales incorrectas");
-        }
-
-    } catch (err) {
-        showToast("Error del servidor");
-    }
-
-    text.innerText = "Entrar";
-    loader.classList.add("hidden");
-    btn.disabled = false;
+  bc.style.display = 'flex'; lc.style.display = 'none';
+  btn.disabled = false; btn.style.opacity = '1';
+  pw.style.display = 'none';
 }
-</script>
 
+const btn = document.getElementById('btnLogin');
+btn.addEventListener('mouseenter', () => { if (!btn.disabled) btn.style.background = 'linear-gradient(135deg,#222,#2e2e2e,#1e1e1e)'; });
+btn.addEventListener('mouseleave', () => { btn.style.background = 'linear-gradient(135deg,#1a1a1a,#252525,#181818)'; });
+btn.addEventListener('mousedown',  () => { btn.style.transform = 'scale(0.98)'; });
+btn.addEventListener('mouseup',    () => { btn.style.transform = 'scale(1)'; });
+</script>
 </body>
 </html>
