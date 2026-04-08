@@ -9,14 +9,13 @@ export default async function handler(req, res) {
 
     try {
 
-        // ✅ PARSEAR BODY PRIMERO (IMPORTANTE)
+        // ✅ PARSE BODY
         let body = req.body;
-
         if (typeof body === "string") {
             body = JSON.parse(body);
         }
 
-        // 🔹 GET ACTIVIDADES
+        // 🔹 GET
         if (req.method === 'GET') {
 
             const { data, error } = await supabase
@@ -41,8 +40,6 @@ export default async function handler(req, res) {
 
         // 🔹 POST
         if (req.method === 'POST') {
-
-            console.log("BODY:", body);
 
             const { title, description, start_time, end_time, user_id, people_names } = body;
 
@@ -69,41 +66,58 @@ export default async function handler(req, res) {
                 return res.status(500).json({ success: false, message: error.message });
             }
 
-            // ✅ 2. PERSONAS
+            // ✅ 2. PERSONAS PRO
             if (people_names && Array.isArray(people_names) && people_names.length > 0) {
 
-                let person_ids = [];
+                // 🧼 limpiar + normalizar
+                const normalized = [...new Set(
+                    people_names
+                        .map(n => n.trim())
+                        .filter(n => n.length > 0)
+                )];
 
-                for (let name of people_names) {
+                // 🔍 buscar existentes (case-insensitive manual)
+                const { data: existingPeople, error: fetchError } = await supabase
+                    .from('people')
+                    .select('*');
 
-                    // 🔍 Buscar existente
-                    const { data: existing } = await supabase
+                if (fetchError) {
+                    console.error("FETCH PEOPLE ERROR:", fetchError);
+                }
+
+                const existingMap = {};
+                existingPeople.forEach(p => {
+                    existingMap[p.name.toLowerCase()] = p.id;
+                });
+
+                // ➕ separar nuevos
+                const newPeople = normalized.filter(name =>
+                    !existingMap[name.toLowerCase()]
+                );
+
+                let newIds = [];
+
+                // 🚀 INSERT MASIVO
+                if (newPeople.length > 0) {
+                    const { data: inserted, error: insertError } = await supabase
                         .from('people')
-                        .select('*')
-                        .ilike('name', name)
-                        .maybeSingle();
+                        .insert(newPeople.map(name => ({ name })))
+                        .select();
 
-                    if (existing) {
-                        person_ids.push(existing.id);
+                    if (insertError) {
+                        console.error("INSERT ERROR:", insertError);
                     } else {
-                        // ➕ Crear
-                        const { data: newPerson, error } = await supabase
-                            .from('people')
-                            .insert([{ name }])
-                            .select()
-                            .single();
-
-                        if (error) {
-                            console.error("PERSON CREATE ERROR:", error);
-                            continue;
-                        }
-
-                        person_ids.push(newPerson.id);
+                        inserted.forEach(p => {
+                            existingMap[p.name.toLowerCase()] = p.id;
+                        });
                     }
                 }
 
-                // 🔗 Asignaciones
-                const assignments = person_ids.map(person_id => ({
+                // 🔗 IDs finales
+                const allIds = normalized.map(name => existingMap[name.toLowerCase()]);
+
+                // 🚀 INSERT MASIVO RELACIONES
+                const assignments = allIds.map(person_id => ({
                     activity_id: activity.id,
                     person_id
                 }));

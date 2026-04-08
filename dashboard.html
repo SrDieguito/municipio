@@ -56,9 +56,16 @@ class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full">
 <textarea id="description" placeholder="Descripción"
 class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full"></textarea>
 
-<!-- ✅ SELECT REAL DE PERSONAS -->
-<input id="peopleInput" placeholder="Ej: Diego Santana, Daniel Cantos"
-class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full">
+<!-- 🔥 INPUT PRO CON TAGS -->
+<div class="col-span-2">
+    <input id="peopleInput" placeholder="Escribe un nombre y presiona Enter"
+    class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full">
+
+    <div id="peopleTags" class="flex flex-wrap gap-2 mt-2"></div>
+
+    <div id="suggestions"
+    class="bg-gray-900 border border-gray-700 mt-2 rounded-lg hidden"></div>
+</div>
 
 <input type="datetime-local" id="start"
 class="p-3 bg-gray-800 rounded-lg border border-gray-700 w-full">
@@ -98,17 +105,96 @@ function showToast(msg, error = false) {
     setTimeout(() => toast.style.display = "none", 3000);
 }
 
+// 🔥 ESTADO GLOBAL PERSONAS
+let selectedPeople = [];
+let allPeople = [];
+
 // 👥 CARGAR PERSONAS
 async function loadPeople() {
     let res = await fetch('/api/people');
-    let data = await res.json();
-
-    let select = document.getElementById("peopleSelect");
-
-    select.innerHTML = data.map(p =>
-        `<option value="${p.id}">${p.name} (${p.role || 'Sin rol'})</option>`
-    ).join('');
+    allPeople = await res.json();
 }
+
+// 🎯 RENDER TAGS
+function renderTags() {
+    const container = document.getElementById("peopleTags");
+
+    container.innerHTML = selectedPeople.map((p, i) => `
+        <span class="bg-blue-600 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+            ${p}
+            <button onclick="removePerson(${i})">✕</button>
+        </span>
+    `).join('');
+}
+
+function removePerson(index) {
+    selectedPeople.splice(index, 1);
+    renderTags();
+}
+
+// 🔍 AUTOCOMPLETE
+function showSuggestions(value) {
+    const box = document.getElementById("suggestions");
+
+    if (!value) {
+        box.classList.add("hidden");
+        return;
+    }
+
+    const matches = allPeople.filter(p =>
+        p.name.toLowerCase().includes(value.toLowerCase())
+    );
+
+    if (matches.length === 0) {
+        box.classList.add("hidden");
+        return;
+    }
+
+    box.innerHTML = matches.map(p => `
+        <div onclick="selectSuggestion('${p.name}')"
+        class="p-2 hover:bg-gray-800 cursor-pointer">
+            ${p.name}
+        </div>
+    `).join('');
+
+    box.classList.remove("hidden");
+}
+
+function selectSuggestion(name) {
+    if (!selectedPeople.some(p => p.toLowerCase() === name.toLowerCase())) {
+        selectedPeople.push(name);
+        renderTags();
+    }
+
+    document.getElementById("peopleInput").value = "";
+    document.getElementById("suggestions").classList.add("hidden");
+}
+
+// ⌨️ INPUT EVENTS
+const input = document.getElementById("peopleInput");
+
+input.addEventListener("input", e => {
+    showSuggestions(e.target.value);
+});
+
+input.addEventListener("keydown", e => {
+
+    if (e.key === "Enter") {
+        e.preventDefault();
+
+        let value = e.target.value.trim();
+        if (!value) return;
+
+        if (!selectedPeople.some(p => p.toLowerCase() === value.toLowerCase())) {
+            selectedPeople.push(value);
+        }
+
+        renderTags();
+
+        e.target.value = "";
+        document.getElementById("suggestions").classList.add("hidden");
+    }
+});
 
 // ➕ CREAR ACTIVIDAD
 async function createActivity() {
@@ -118,15 +204,11 @@ async function createActivity() {
     let start = document.getElementById("start").value;
     let end = document.getElementById("end").value;
 
-    let peopleRaw = document.getElementById("peopleInput").value;
+    let people_names = selectedPeople;
 
-    let people_names = peopleRaw
-        .split(',')
-        .map(p => p.trim())
-        .filter(p => p.length > 0);
-        if (!title || !start || !end) {
-            return showToast("Completa los campos", true);
-        }
+    if (!title || !start || !end) {
+        return showToast("Completa los campos", true);
+    }
 
     let res = await fetch('/api/activities', {
         method: 'POST',
@@ -150,6 +232,9 @@ async function createActivity() {
         document.getElementById("description").value = "";
         document.getElementById("start").value = "";
         document.getElementById("end").value = "";
+
+        selectedPeople = [];
+        renderTags();
 
         loadActivities();
     } else {
@@ -184,7 +269,6 @@ async function loadActivities() {
         div.innerHTML = `
             <h3 class="text-xl font-semibold mb-2">${act.title}</h3>
 
-            <!-- ✅ AQUÍ VA TU P CORRECTO -->
             <p class="text-sm text-gray-400 mb-3 whitespace-pre-line">
                 ${act.description || 'Sin descripción'}
             </p>
