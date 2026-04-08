@@ -253,7 +253,9 @@ async function loadActivities() {
 
     container.innerHTML = "";
 
-    data.forEach(act => {
+    data
+    .filter(act => act.status !== 'completed') // 👈 SOLO ACTIVAS
+    .forEach(act => {
 
         let peopleHTML = act.activity_assignments?.length
             ? act.activity_assignments.map(a =>
@@ -291,6 +293,23 @@ async function loadActivities() {
             class="text-sm text-red-400 hover:text-red-300">
                 Eliminar
             </button>
+            
+            <div class="flex gap-2 mt-3">
+            <button onclick="updateStatus('${act.id}', 'pending')"
+            class="text-xs px-2 py-1 bg-gray-700 rounded">
+                Pendiente
+            </button>
+
+            <button onclick="updateStatus('${act.id}', 'in_progress')"
+            class="text-xs px-2 py-1 bg-yellow-600 rounded">
+                En curso
+            </button>
+
+            <button onclick="updateStatus('${act.id}', 'completed')"
+            class="text-xs px-2 py-1 bg-green-600 rounded">
+                Finalizado
+            </button>
+        </div>
         `;
 
         container.appendChild(div);
@@ -311,9 +330,52 @@ async function deleteActivity(id) {
 }
 
 // OTROS
-function loadHistory() {
-    showToast("Historial próximamente");
+
+async function loadHistory() {
+
+    let container = document.getElementById("activities");
+    container.innerHTML = `<p class="text-gray-500">Cargando historial...</p>`;
+
+    let res = await fetch('/api/activities');
+    let data = await res.json();
+
+    container.innerHTML = "";
+
+    data
+    .filter(act => act.status === 'completed') // 👈 SOLO FINALIZADAS
+    .forEach(act => {
+
+        let div = document.createElement("div");
+        div.className = "bg-gray-900 p-5 rounded-2xl border border-gray-800 fade-in";
+
+        div.innerHTML = `
+            <h3 class="text-xl font-semibold mb-2">${act.title}</h3>
+
+            <p class="text-sm text-gray-400 mb-3">
+                ${act.description || 'Sin descripción'}
+            </p>
+
+            <p class="text-sm text-green-400">
+                ✔ Finalizado
+            </p>
+
+            <p class="text-xs ${
+    act.status === 'pending' ? 'text-gray-400' :
+    act.status === 'in_progress' ? 'text-yellow-400' :
+    'text-green-400'
+}">
+    Estado: ${
+        act.status === 'pending' ? 'Pendiente' :
+        act.status === 'in_progress' ? 'En curso' :
+        'Finalizado'
+    }
+</p>
+        `;
+
+        container.appendChild(div);
+    });
 }
+
 
 function logout() {
     localStorage.removeItem("user");
@@ -323,6 +385,24 @@ function logout() {
 // INIT
 loadPeople();
 loadActivities();
+
+async function updateStatus(id, status) {
+
+    let res = await fetch('/api/activities', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status })
+    });
+
+    let data = await res.json();
+
+    if (data.success) {
+        showToast("Estado actualizado");
+        loadActivities();
+    } else {
+        showToast("Error", true);
+    }
+}
 
 </script>
 

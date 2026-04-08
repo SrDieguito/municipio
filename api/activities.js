@@ -138,6 +138,28 @@ export default async function handler(req, res) {
             return res.json({ success: true, activity });
         }
 
+                    // 🔹 PATCH (ACTUALIZAR ESTADO)
+            if (req.method === 'PATCH') {
+
+                const { id, status } = body;
+
+                if (!id || !status) {
+                    return res.status(400).json({ success: false });
+                }
+
+                const { error } = await supabase
+                    .from('activities')
+                    .update({ status })
+                    .eq('id', id);
+
+                if (error) {
+                    console.error("UPDATE ERROR:", error);
+                    return res.status(500).json({ success: false });
+                }
+
+                return res.json({ success: true });
+            }
+
         // 🔹 DELETE
         if (req.method === 'DELETE') {
 
