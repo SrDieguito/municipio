@@ -139,17 +139,24 @@ export default async function handler(req, res) {
         }
 
                     // 🔹 PATCH (ACTUALIZAR ESTADO)
-            if (req.method === 'PATCH') {
+                        if (req.method === 'PATCH') {
 
-                const { id, status } = body;
+                const { id, status, observations } = body;
 
                 if (!id || !status) {
                     return res.status(400).json({ success: false });
                 }
 
+                const updateData = { status };
+
+                // 👉 SOLO guardar observaciones si viene
+                if (observations) {
+                    updateData.observations = observations;
+                }
+
                 const { error } = await supabase
                     .from('activities')
-                    .update({ status })
+                    .update(updateData)
                     .eq('id', id);
 
                 if (error) {

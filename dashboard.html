@@ -18,6 +18,8 @@
 
 <body class="bg-gray-950 text-gray-200">
 
+    
+
 <div id="toast" class="fixed top-5 right-5 hidden px-5 py-3 rounded-lg shadow-lg"></div>
 
 <div class="flex">
@@ -305,7 +307,7 @@ async function loadActivities() {
                 En curso
             </button>
 
-            <button onclick="updateStatus('${act.id}', 'completed')"
+            <button onclick="openModal('${act.id}')"
             class="text-xs px-2 py-1 bg-green-600 rounded">
                 Finalizado
             </button>
@@ -333,6 +335,10 @@ async function deleteActivity(id) {
 
 async function loadHistory() {
 
+    <p class="text-sm text-gray-400 mt-2">
+    ${act.observations || 'Sin observaciones'}
+</p>
+
     let container = document.getElementById("activities");
     container.innerHTML = `<p class="text-gray-500">Cargando historial...</p>`;
 
@@ -348,29 +354,26 @@ async function loadHistory() {
         let div = document.createElement("div");
         div.className = "bg-gray-900 p-5 rounded-2xl border border-gray-800 fade-in";
 
-        div.innerHTML = `
-            <h3 class="text-xl font-semibold mb-2">${act.title}</h3>
+div.innerHTML = `
+    <h3>${act.title}</h3>
 
-            <p class="text-sm text-gray-400 mb-3">
-                ${act.description || 'Sin descripción'}
-            </p>
+    <p>${act.description}</p>
 
-            <p class="text-sm text-green-400">
-                ✔ Finalizado
-            </p>
+    <div>${peopleHTML}</div>
 
-            <p class="text-xs ${
-    act.status === 'pending' ? 'text-gray-400' :
-    act.status === 'in_progress' ? 'text-yellow-400' :
-    'text-green-400'
-}">
-    Estado: ${
-        act.status === 'pending' ? 'Pendiente' :
-        act.status === 'in_progress' ? 'En curso' :
-        'Finalizado'
-    }
-</p>
-        `;
+    <!-- 👇 AQUÍ -->
+    <p class="text-xs ${
+        act.status === 'pending' ? 'text-gray-400' :
+        act.status === 'in_progress' ? 'text-yellow-400' :
+        'text-green-400'
+    }">
+        Estado: ${
+            act.status === 'pending' ? 'Pendiente' :
+            act.status === 'in_progress' ? 'En curso' :
+            'Finalizado'
+        }
+    </p>
+`;
 
         container.appendChild(div);
     });
@@ -404,7 +407,72 @@ async function updateStatus(id, status) {
     }
 }
 
+let currentActivityId = null;
+
+function openModal(id) {
+    currentActivityId = id;
+    document.getElementById("modalObs").classList.remove("hidden");
+    document.getElementById("modalObs").classList.add("flex");
+}
+
+function closeModal() {
+    document.getElementById("modalObs").classList.add("hidden");
+    document.getElementById("modalObs").classList.remove("flex");
+    document.getElementById("obsInput").value = "";
+}
+
+async function confirmComplete() {
+
+    let observations = document.getElementById("obsInput").value;
+
+    let res = await fetch('/api/activities', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            id: currentActivityId,
+            status: 'completed',
+            observations
+        })
+    });
+
+    let data = await res.json();
+
+    if (data.success) {
+        showToast("Actividad finalizada");
+        closeModal();
+        loadActivities();
+    } else {
+        showToast("Error", true);
+    }
+}
+
 </script>
+
+<!-- 🔥 MODAL OBSERVACIONES -->
+<div id="modalObs" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
+
+    <div class="bg-gray-900 p-6 rounded-2xl w-full max-w-md border border-gray-800 fade-in">
+        
+        <h2 class="text-xl font-bold mb-4">Finalizar actividad</h2>
+
+        <textarea id="obsInput"
+        placeholder="Escribe observaciones..."
+        class="w-full p-3 bg-gray-800 rounded-lg border border-gray-700 mb-4"></textarea>
+
+        <div class="flex justify-end gap-2">
+            <button onclick="closeModal()"
+            class="px-4 py-2 bg-gray-700 rounded-lg">
+                Cancelar
+            </button>
+
+            <button onclick="confirmComplete()"
+            class="px-4 py-2 bg-green-600 rounded-lg">
+                Finalizar
+            </button>
+        </div>
+
+    </div>
+</div>
 
 </body>
 </html>
