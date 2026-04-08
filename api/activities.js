@@ -47,7 +47,7 @@ export default async function handler(req, res) {
                 return res.status(400).json({ success: false, message: "Datos incompletos" });
             }
 
-            // ✅ 1. CREAR ACTIVIDAD
+            // ✅ CREAR ACTIVIDAD
             const { data: activity, error } = await supabase
                 .from('activities')
                 .insert([{
@@ -66,17 +66,15 @@ export default async function handler(req, res) {
                 return res.status(500).json({ success: false, message: error.message });
             }
 
-            // ✅ 2. PERSONAS PRO
+            // ✅ PERSONAS PRO
             if (people_names && Array.isArray(people_names) && people_names.length > 0) {
 
-                // 🧼 limpiar + normalizar
                 const normalized = [...new Set(
                     people_names
                         .map(n => n.trim())
                         .filter(n => n.length > 0)
                 )];
 
-                // 🔍 buscar existentes (case-insensitive manual)
                 const { data: existingPeople, error: fetchError } = await supabase
                     .from('people')
                     .select('*');
@@ -86,18 +84,16 @@ export default async function handler(req, res) {
                 }
 
                 const existingMap = {};
-                existingPeople.forEach(p => {
+
+                (existingPeople || []).forEach(p => {
                     existingMap[p.name.toLowerCase()] = p.id;
                 });
 
-                // ➕ separar nuevos
                 const newPeople = normalized.filter(name =>
                     !existingMap[name.toLowerCase()]
                 );
 
-                let newIds = [];
-
-                // 🚀 INSERT MASIVO
+                // 🚀 INSERT MASIVO PERSONAS
                 if (newPeople.length > 0) {
                     const { data: inserted, error: insertError } = await supabase
                         .from('people')
@@ -107,16 +103,14 @@ export default async function handler(req, res) {
                     if (insertError) {
                         console.error("INSERT ERROR:", insertError);
                     } else {
-                        inserted.forEach(p => {
+                        (inserted || []).forEach(p => {
                             existingMap[p.name.toLowerCase()] = p.id;
                         });
                     }
                 }
 
-                // 🔗 IDs finales
                 const allIds = normalized.map(name => existingMap[name.toLowerCase()]);
 
-                // 🚀 INSERT MASIVO RELACIONES
                 const assignments = allIds.map(person_id => ({
                     activity_id: activity.id,
                     person_id
@@ -138,34 +132,34 @@ export default async function handler(req, res) {
             return res.json({ success: true, activity });
         }
 
-                    // 🔹 PATCH (ACTUALIZAR ESTADO)
-                        if (req.method === 'PATCH') {
+        // 🔹 PATCH (ESTADO + OBSERVACIONES)
+        if (req.method === 'PATCH') {
 
-                const { id, status, observations } = body;
+            const { id, status, observations } = body;
 
-                if (!id || !status) {
-                    return res.status(400).json({ success: false });
-                }
-
-                const updateData = { status };
-
-                // 👉 SOLO guardar observaciones si viene
-                if (observations) {
-                    updateData.observations = observations;
-                }
-
-                const { error } = await supabase
-                    .from('activities')
-                    .update(updateData)
-                    .eq('id', id);
-
-                if (error) {
-                    console.error("UPDATE ERROR:", error);
-                    return res.status(500).json({ success: false });
-                }
-
-                return res.json({ success: true });
+            if (!id || !status) {
+                return res.status(400).json({ success: false });
             }
+
+            const updateData = { status };
+
+            // ✅ SOLO si tiene contenido real
+            if (observations && observations.trim() !== "") {
+                updateData.observations = observations.trim();
+            }
+
+            const { error } = await supabase
+                .from('activities')
+                .update(updateData)
+                .eq('id', id);
+
+            if (error) {
+                console.error("UPDATE ERROR:", error);
+                return res.status(500).json({ success: false });
+            }
+
+            return res.json({ success: true });
+        }
 
         // 🔹 DELETE
         if (req.method === 'DELETE') {

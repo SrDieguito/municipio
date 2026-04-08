@@ -107,7 +107,7 @@ function showToast(msg, error = false) {
     setTimeout(() => toast.style.display = "none", 3000);
 }
 
-// 🔥 ESTADO GLOBAL PERSONAS
+// 🔥 PERSONAS
 let selectedPeople = [];
 let allPeople = [];
 
@@ -117,7 +117,7 @@ async function loadPeople() {
     allPeople = await res.json();
 }
 
-// 🎯 RENDER TAGS
+// 🎯 TAGS
 function renderTags() {
     const container = document.getElementById("peopleTags");
 
@@ -138,19 +138,13 @@ function removePerson(index) {
 function showSuggestions(value) {
     const box = document.getElementById("suggestions");
 
-    if (!value) {
-        box.classList.add("hidden");
-        return;
-    }
+    if (!value) return box.classList.add("hidden");
 
     const matches = allPeople.filter(p =>
         p.name.toLowerCase().includes(value.toLowerCase())
     );
 
-    if (matches.length === 0) {
-        box.classList.add("hidden");
-        return;
-    }
+    if (matches.length === 0) return box.classList.add("hidden");
 
     box.innerHTML = matches.map(p => `
         <div onclick="selectSuggestion('${p.name}')"
@@ -172,7 +166,7 @@ function selectSuggestion(name) {
     document.getElementById("suggestions").classList.add("hidden");
 }
 
-// ⌨️ INPUT EVENTS
+// ⌨️ INPUT
 const input = document.getElementById("peopleInput");
 
 input.addEventListener("input", e => {
@@ -180,7 +174,6 @@ input.addEventListener("input", e => {
 });
 
 input.addEventListener("keydown", e => {
-
     if (e.key === "Enter") {
         e.preventDefault();
 
@@ -192,21 +185,18 @@ input.addEventListener("keydown", e => {
         }
 
         renderTags();
-
         e.target.value = "";
         document.getElementById("suggestions").classList.add("hidden");
     }
 });
 
-// ➕ CREAR ACTIVIDAD
+// ➕ CREAR
 async function createActivity() {
 
     let title = document.getElementById("title").value;
     let description = document.getElementById("description").value;
     let start = document.getElementById("start").value;
     let end = document.getElementById("end").value;
-
-    let people_names = selectedPeople;
 
     if (!title || !start || !end) {
         return showToast("Completa los campos", true);
@@ -221,7 +211,7 @@ async function createActivity() {
             start_time: start,
             end_time: end,
             user_id: user.id,
-            people_names
+            people_names: selectedPeople
         })
     });
 
@@ -244,7 +234,7 @@ async function createActivity() {
     }
 }
 
-// 📥 CARGAR ACTIVIDADES
+// 📥 ACTIVIDADES
 async function loadActivities() {
 
     let container = document.getElementById("activities");
@@ -256,7 +246,7 @@ async function loadActivities() {
     container.innerHTML = "";
 
     data
-    .filter(act => act.status !== 'completed') // 👈 SOLO ACTIVAS
+    .filter(act => act.status !== 'completed')
     .forEach(act => {
 
         let peopleHTML = act.activity_assignments?.length
@@ -268,6 +258,7 @@ async function loadActivities() {
             : '<span class="text-xs text-gray-500">Sin asignar</span>';
 
         let div = document.createElement("div");
+
         div.className = "bg-gray-900 p-5 rounded-2xl border border-gray-800 fade-in";
 
         div.innerHTML = `
@@ -279,10 +270,6 @@ async function loadActivities() {
 
             <div class="mb-3">${peopleHTML}</div>
 
-            <p class="text-xs text-gray-500 mb-2">
-                Creado por: ${act.users?.username || 'N/A'}
-            </p>
-
             <p class="text-sm text-gray-400">
                 Inicio: ${new Date(act.start_time).toLocaleString()}
             </p>
@@ -291,53 +278,19 @@ async function loadActivities() {
                 Fin: ${new Date(act.end_time).toLocaleString()}
             </p>
 
-            <button onclick="deleteActivity('${act.id}')"
-            class="text-sm text-red-400 hover:text-red-300">
-                Eliminar
-            </button>
-            
             <div class="flex gap-2 mt-3">
-            <button onclick="updateStatus('${act.id}', 'pending')"
-            class="text-xs px-2 py-1 bg-gray-700 rounded">
-                Pendiente
-            </button>
-
-            <button onclick="updateStatus('${act.id}', 'in_progress')"
-            class="text-xs px-2 py-1 bg-yellow-600 rounded">
-                En curso
-            </button>
-
-            <button onclick="openModal('${act.id}')"
-            class="text-xs px-2 py-1 bg-green-600 rounded">
-                Finalizado
-            </button>
-        </div>
+                <button onclick="updateStatus('${act.id}', 'pending')" class="text-xs px-2 py-1 bg-gray-700 rounded">Pendiente</button>
+                <button onclick="updateStatus('${act.id}', 'in_progress')" class="text-xs px-2 py-1 bg-yellow-600 rounded">En curso</button>
+                <button onclick="openModal('${act.id}')" class="text-xs px-2 py-1 bg-green-600 rounded">Finalizar</button>
+            </div>
         `;
 
         container.appendChild(div);
     });
 }
 
-// 🗑 ELIMINAR
-async function deleteActivity(id) {
-    let res = await fetch('/api/activities?id=' + id, { method: 'DELETE' });
-    let data = await res.json();
-
-    if (data.success) {
-        showToast("Eliminado");
-        loadActivities();
-    } else {
-        showToast("Error", true);
-    }
-}
-
-// OTROS
-
+// 📜 HISTORIAL (🔥 FIX REAL)
 async function loadHistory() {
-
-    <p class="text-sm text-gray-400 mt-2">
-    ${act.observations || 'Sin observaciones'}
-</p>
 
     let container = document.getElementById("activities");
     container.innerHTML = `<p class="text-gray-500">Cargando historial...</p>`;
@@ -348,47 +301,42 @@ async function loadHistory() {
     container.innerHTML = "";
 
     data
-    .filter(act => act.status === 'completed') // 👈 SOLO FINALIZADAS
+    .filter(act => act.status === 'completed')
     .forEach(act => {
 
+        let peopleHTML = act.activity_assignments?.length
+            ? act.activity_assignments.map(a =>
+                `<span class="text-xs bg-blue-600 px-2 py-1 rounded-full mr-1">
+                    ${a.people?.name}
+                </span>`
+              ).join('')
+            : '<span class="text-xs text-gray-500">Sin asignar</span>';
+
         let div = document.createElement("div");
+
         div.className = "bg-gray-900 p-5 rounded-2xl border border-gray-800 fade-in";
 
-div.innerHTML = `
-    <h3>${act.title}</h3>
+        div.innerHTML = `
+            <h3 class="text-xl font-semibold mb-2">${act.title}</h3>
 
-    <p>${act.description}</p>
+            <p class="text-sm text-gray-400 mb-3">
+                ${act.description || 'Sin descripción'}
+            </p>
 
-    <div>${peopleHTML}</div>
+            <div class="mb-3">${peopleHTML}</div>
 
-    <!-- 👇 AQUÍ -->
-    <p class="text-xs ${
-        act.status === 'pending' ? 'text-gray-400' :
-        act.status === 'in_progress' ? 'text-yellow-400' :
-        'text-green-400'
-    }">
-        Estado: ${
-            act.status === 'pending' ? 'Pendiente' :
-            act.status === 'in_progress' ? 'En curso' :
-            'Finalizado'
-        }
-    </p>
-`;
+            <p class="text-green-400 text-xs mb-2">Finalizado</p>
+
+            <p class="text-sm text-gray-300">
+                📝 ${act.observations || 'Sin observaciones'}
+            </p>
+        `;
 
         container.appendChild(div);
     });
 }
 
-
-function logout() {
-    localStorage.removeItem("user");
-    window.location.href = "index.html";
-}
-
-// INIT
-loadPeople();
-loadActivities();
-
+// 🔄 ESTADO
 async function updateStatus(id, status) {
 
     let res = await fetch('/api/activities', {
@@ -407,6 +355,7 @@ async function updateStatus(id, status) {
     }
 }
 
+// 🧠 MODAL
 let currentActivityId = null;
 
 function openModal(id) {
@@ -445,6 +394,10 @@ async function confirmComplete() {
         showToast("Error", true);
     }
 }
+
+// INIT
+loadPeople();
+loadActivities();
 
 </script>
 
