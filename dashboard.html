@@ -395,6 +395,11 @@ async function confirmComplete() {
     }
 }
 
+function logout() {
+    localStorage.removeItem("user");
+    window.location.href = "/";
+}
+
 // INIT
 loadPeople();
 loadActivities();
