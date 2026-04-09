@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body { font-family: 'Syne', sans-serif; }
 
   @keyframes floatUp {
@@ -40,7 +41,13 @@
   .border-anim { animation: borderGlow 3s ease-in-out infinite; }
 
   .field-wrap { position: relative; }
-  .field-wrap input { transition: all 0.3s ease; background: #111; color: #d1d5db; border: 1px solid #2a2a2a; }
+  .field-wrap input {
+    transition: all 0.3s ease;
+    background: #111; color: #d1d5db;
+    border: 1px solid #2a2a2a;
+    /* Evita zoom en iOS al enfocar */
+    font-size: 16px !important;
+  }
   .field-wrap label {
     position: absolute; left: 14px; top: 50%;
     transform: translateY(-50%);
@@ -51,8 +58,8 @@
   }
   .field-wrap input:focus ~ label,
   .field-wrap input:not(:placeholder-shown) ~ label {
-    top: 6px; transform: none;
-    font-size: 0.62rem; color: #6b7280; letter-spacing: 0.12em;
+    top: 7px; transform: none;
+    font-size: 0.6rem; color: #6b7280; letter-spacing: 0.12em;
   }
   .field-wrap input:focus {
     border-color: #4b4b4b !important;
@@ -83,7 +90,7 @@
     100% { opacity: 1; transform: translateY(0) scale(1); }
   }
   @keyframes toastOut {
-    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    0%   { opacity: 1; }
     100% { opacity: 0; transform: translateY(16px) scale(0.96); }
   }
   .toast-in  { animation: toastIn  0.3s cubic-bezier(0.16,1,0.3,1) forwards; }
@@ -105,21 +112,33 @@
   .line-expand { animation: lineExpand 0.7s 0.4s ease forwards; width: 0; opacity:0; }
 
   .spinner {
-    width: 16px; height: 16px;
+    width: 18px; height: 18px;
     border: 2px solid #333;
     border-top-color: #888;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Botón táctil más grande en móvil */
+  @media (max-width: 480px) {
+    .login-card { padding: 28px 20px !important; }
+    .login-btn  { padding: 16px !important; font-size: 0.8rem !important; }
+    .login-input { padding: 22px 14px 9px !important; }
+    .card-wrapper { width: 100% !important; max-width: 400px; }
+  }
+
+  /* Safe area para notch/home bar */
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
 </style>
 </head>
-<body style="background:#000; min-height:100vh; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;">
+<body style="background:#000; min-height:100dvh; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative;" class="safe-bottom">
 
 <!-- Partículas -->
 <div id="particles" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
 
-<!-- Fondo: neblina radial suave, sin cuadrícula -->
+<!-- Fondo radial suave -->
 <div class="absolute inset-0 pointer-events-none" style="
   background:
     radial-gradient(ellipse 60% 50% at 50% 50%, rgba(35,35,35,0.55) 0%, transparent 70%),
@@ -128,7 +147,7 @@
 "></div>
 
 <!-- Card wrapper -->
-<div class="card-in" style="position:relative; z-index:10; width:340px; margin:0 16px;">
+<div class="card-in card-wrapper" style="position:relative; z-index:10; width:360px; margin:0 16px;">
 
   <!-- Esquinas decorativas -->
   <div style="position:absolute; top:-1px; left:-1px; width:18px; height:18px; border-top:1px solid #555; border-left:1px solid #555;"></div>
@@ -137,13 +156,13 @@
   <div style="position:absolute; bottom:-1px; right:-1px; width:18px; height:18px; border-bottom:1px solid #555; border-right:1px solid #555;"></div>
 
   <!-- Card -->
-  <div class="border-anim" style="background:#0a0a0a; border:1px solid #222; border-radius:16px; padding:32px; position:relative; overflow:hidden; box-shadow: 0 0 80px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.03);">
+  <div class="border-anim login-card" style="background:#0a0a0a; border:1px solid #222; border-radius:16px; padding:32px; position:relative; overflow:hidden; box-shadow: 0 0 80px rgba(0,0,0,0.95), inset 0 1px 0 rgba(255,255,255,0.03);">
 
-    <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:1px; background:linear-gradient(90deg, transparent, #555, transparent); opacity:0.4;"></div>
+    <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:1px; background:linear-gradient(90deg,transparent,#555,transparent); opacity:0.4;"></div>
 
     <!-- Logo -->
-    <div style="display:flex; justify-content:center; margin-bottom:24px;">
-      <div class="logo-pulse" style="width:44px; height:44px; border-radius:10px; background:#111; border:1px solid #2a2a2a; display:flex; align-items:center; justify-content:center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);">
+    <div style="display:flex; justify-content:center; margin-bottom:22px;">
+      <div class="logo-pulse" style="width:46px; height:46px; border-radius:10px; background:#111; border:1px solid #2a2a2a; display:flex; align-items:center; justify-content:center;">
         <svg width="18" height="18" fill="none" stroke="#9ca3af" stroke-width="1.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/>
         </svg>
@@ -157,24 +176,45 @@
     </div>
 
     <!-- Separador -->
-    <div style="display:flex; align-items:center; gap:10px; margin:20px 0;">
-      <div class="line-expand" style="height:1px; background:linear-gradient(to right, transparent, #2a2a2a); flex:1;"></div>
+    <div style="display:flex; align-items:center; gap:10px; margin:18px 0;">
+      <div class="line-expand" style="height:1px; background:linear-gradient(to right,transparent,#2a2a2a); flex:1;"></div>
       <div style="width:3px; height:3px; border-radius:50%; background:#2a2a2a;"></div>
-      <div class="line-expand" style="height:1px; background:linear-gradient(to left, transparent, #2a2a2a); flex:1;"></div>
+      <div class="line-expand" style="height:1px; background:linear-gradient(to left,transparent,#2a2a2a); flex:1;"></div>
     </div>
 
     <!-- Usuario -->
     <div class="field-wrap" style="margin-bottom:10px;">
       <input id="user" type="text" placeholder=" "
-        style="width:100%; padding:20px 12px 8px; border-radius:8px; font-family:'DM Mono',monospace; font-size:0.82rem; letter-spacing:0.04em;">
+        autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"
+        class="login-input"
+        style="width:100%; padding:22px 14px 9px; border-radius:8px; font-family:'DM Mono',monospace; letter-spacing:0.04em;">
       <label for="user">USUARIO</label>
     </div>
 
     <!-- Contraseña -->
-    <div class="field-wrap" style="margin-bottom:20px;">
+    <div class="field-wrap" style="margin-bottom:6px; position:relative;">
       <input id="pass" type="password" placeholder=" "
-        style="width:100%; padding:20px 12px 8px; border-radius:8px; font-family:'DM Mono',monospace; font-size:0.82rem; letter-spacing:0.04em;">
+        autocomplete="current-password"
+        class="login-input"
+        style="width:100%; padding:22px 42px 9px 14px; border-radius:8px; font-family:'DM Mono',monospace; letter-spacing:0.04em;">
       <label for="pass">CONTRASEÑA</label>
+      <!-- Mostrar/ocultar contraseña -->
+      <button id="togglePass" type="button" onclick="togglePassword()"
+        style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; padding:6px; color:#4b5563; transition:color 0.2s;"
+        onmouseover="this.style.color='#9ca3af'" onmouseout="this.style.color='#4b5563'">
+        <svg id="eyeIcon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Link olvidaste -->
+    <div style="text-align:right; margin-bottom:18px;">
+      <span style="font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:0.1em; color:#4b5563; cursor:pointer; transition:color 0.2s;"
+        onmouseover="this.style.color='#9ca3af'" onmouseout="this.style.color='#4b5563'">
+        ¿Olvidaste tu acceso?
+      </span>
     </div>
 
     <!-- Progress -->
@@ -183,8 +223,8 @@
     </div>
 
     <!-- Botón -->
-    <button id="btnLogin" onclick="login()" class="btn-shimmer"
-      style="width:100%; padding:13px; border-radius:10px; font-family:'Syne',sans-serif; font-weight:700; font-size:0.72rem; letter-spacing:0.2em; text-transform:uppercase; color:#d1d5db; background:linear-gradient(135deg,#1a1a1a,#252525,#181818); border:1px solid #333; cursor:pointer; transition:all 0.25s ease; box-shadow:0 2px 20px rgba(0,0,0,0.6);">
+    <button id="btnLogin" onclick="login()" class="btn-shimmer login-btn"
+      style="width:100%; padding:15px; border-radius:10px; font-family:'Syne',sans-serif; font-weight:700; font-size:0.75rem; letter-spacing:0.2em; text-transform:uppercase; color:#d1d5db; background:linear-gradient(135deg,#1a1a1a,#252525,#181818); border:1px solid #333; cursor:pointer; transition:all 0.25s ease; box-shadow:0 2px 20px rgba(0,0,0,0.6); touch-action:manipulation;">
       <span id="btnContent" style="display:flex; align-items:center; justify-content:center; gap:10px;">
         Entrar
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -197,28 +237,23 @@
       </span>
     </button>
 
-    <p style="text-align:center; margin-top:18px; font-family:'DM Mono',monospace; font-size:0.65rem; letter-spacing:0.12em; color:#374151;">
-      ¿Olvidaste tu acceso?
-      <span style="color:#6b7280; cursor:pointer; transition:color 0.2s;"
-        onmouseover="this.style.color='#9ca3af'" onmouseout="this.style.color='#6b7280'">Recuperar</span>
-    </p>
-
     <div style="position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:80px; height:1px; background:linear-gradient(90deg,transparent,#333,transparent); opacity:0.4;"></div>
   </div>
 </div>
 
-<!-- Toast -->
-<div id="toast" style="position:fixed; bottom:24px; right:24px; z-index:100; display:none; pointer-events:none;">
-  <div id="toastInner" style="display:flex; align-items:center; gap:10px; padding:10px 16px; border-radius:10px; border:1px solid #2a2a2a; background:#0d0d0d; box-shadow:0 20px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03);">
+<!-- Toast — centrado abajo en móvil -->
+<div id="toast" style="position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:100; display:none; pointer-events:none; width:calc(100% - 48px); max-width:320px;">
+  <div id="toastInner" style="display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:10px; border:1px solid #2a2a2a; background:#0d0d0d; box-shadow:0 20px 40px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03);">
     <div style="width:5px; height:5px; border-radius:50%; background:#555; flex-shrink:0;"></div>
     <span id="toastMsg" style="font-family:'DM Mono',monospace; font-size:0.7rem; letter-spacing:0.08em; color:#9ca3af;"></span>
   </div>
 </div>
 
 <script>
+// Partículas
 (function() {
   const c = document.getElementById('particles');
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 12; i++) {
     const p = document.createElement('div');
     p.className = 'particle';
     const s = Math.random() * 2.5 + 0.5;
@@ -227,6 +262,18 @@
   }
 })();
 
+// Toggle contraseña
+function togglePassword() {
+  const input = document.getElementById('pass');
+  const icon  = document.getElementById('eyeIcon');
+  const show  = input.type === 'password';
+  input.type  = show ? 'text' : 'password';
+  icon.innerHTML = show
+    ? `<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>`
+    : `<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>`;
+}
+
+// Toast
 function showToast(msg) {
   const toast = document.getElementById('toast');
   const inner = document.getElementById('toastInner');
@@ -242,6 +289,7 @@ function showToast(msg) {
   }, 3000);
 }
 
+// Login
 async function login() {
   const btn = document.getElementById('btnLogin');
   const bc  = document.getElementById('btnContent');
@@ -255,7 +303,11 @@ async function login() {
   pb.classList.remove('progress-bar'); void pb.offsetWidth; pb.classList.add('progress-bar');
 
   try {
-    const res  = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: document.getElementById('user').value, password: document.getElementById('pass').value }) });
+    const res  = await fetch('/api/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username: document.getElementById('user').value, password: document.getElementById('pass').value })
+    });
     const data = await res.json();
     if (data.success) {
       showToast('Acceso concedido');
@@ -268,11 +320,18 @@ async function login() {
   pw.style.display = 'none';
 }
 
+// Enter para submit
+document.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+
+// Hover botón (solo desktop)
 const btn = document.getElementById('btnLogin');
 btn.addEventListener('mouseenter', () => { if (!btn.disabled) btn.style.background = 'linear-gradient(135deg,#222,#2e2e2e,#1e1e1e)'; });
 btn.addEventListener('mouseleave', () => { btn.style.background = 'linear-gradient(135deg,#1a1a1a,#252525,#181818)'; });
 btn.addEventListener('mousedown',  () => { btn.style.transform = 'scale(0.98)'; });
 btn.addEventListener('mouseup',    () => { btn.style.transform = 'scale(1)'; });
+// Feedback táctil
+btn.addEventListener('touchstart', () => { btn.style.transform = 'scale(0.97)'; }, {passive:true});
+btn.addEventListener('touchend',   () => { btn.style.transform = 'scale(1)'; }, {passive:true});
 </script>
 </body>
 </html>
