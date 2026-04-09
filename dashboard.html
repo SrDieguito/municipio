@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Dashboard</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   :root {
     --bg-base: #0a0a0b;
     --bg-surface: #111113;
@@ -32,47 +33,81 @@
     --radius-lg: 14px;
     --radius-xl: 18px;
     --sidebar-w: 240px;
+    --topbar-h: 56px;
     --transition: 0.18s ease;
   }
   html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-  body { background: var(--bg-base); color: var(--text-primary); display: flex; font-size: 14px; line-height: 1.5; }
+  body { background: var(--bg-base); color: var(--text-primary); font-size: 14px; line-height: 1.5; }
 
+  /* ── SIDEBAR (desktop) ── */
   aside {
     width: var(--sidebar-w); min-height: 100vh;
     background: var(--bg-surface); border-right: 1px solid var(--border);
     display: flex; flex-direction: column; padding: 24px 16px;
-    position: fixed; top: 0; left: 0; bottom: 0; z-index: 10;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
   }
   .sidebar-logo { display: flex; align-items: center; gap: 10px; padding: 0 8px; margin-bottom: 32px; }
   .sidebar-logo-icon {
     width: 32px; height: 32px; background: var(--accent);
-    border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center;
+    border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   .sidebar-logo span { font-size: 15px; font-weight: 600; letter-spacing: -0.2px; }
   .nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); padding: 0 10px; margin-bottom: 6px; }
   nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
   nav button {
     width: 100%; text-align: left; background: none; border: none;
-    color: var(--text-secondary); padding: 9px 10px; border-radius: var(--radius-md);
+    color: var(--text-secondary); padding: 11px 10px; border-radius: var(--radius-md);
     cursor: pointer; font-size: 13.5px; display: flex; align-items: center; gap: 10px;
     transition: background var(--transition), color var(--transition); font-family: inherit;
+    min-height: 44px;
   }
   nav button:hover { background: var(--bg-hover); color: var(--text-primary); }
   nav button.active { background: var(--accent-dim); color: var(--accent-hover); }
   .sidebar-footer { border-top: 1px solid var(--border); padding-top: 16px; margin-top: 16px; }
   .logout-btn {
     width: 100%; background: none; border: none; color: var(--text-muted);
-    cursor: pointer; font-size: 13px; padding: 8px 10px; border-radius: var(--radius-md);
-    text-align: left; display: flex; align-items: center; gap: 8px;
+    cursor: pointer; font-size: 13px; padding: 10px 10px; border-radius: var(--radius-md);
+    text-align: left; display: flex; align-items: center; gap: 8px; min-height: 44px;
     transition: color var(--transition), background var(--transition); font-family: inherit;
   }
   .logout-btn:hover { color: var(--red); background: var(--red-dim); }
 
-  main { margin-left: var(--sidebar-w); flex: 1; padding: 36px 40px; min-height: 100vh; }
+  /* ── TOPBAR (móvil) ── */
+  .topbar {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; height: var(--topbar-h);
+    background: var(--bg-surface); border-bottom: 1px solid var(--border);
+    align-items: center; justify-content: space-between;
+    padding: 0 16px; z-index: 201;
+  }
+  .topbar-logo { display: flex; align-items: center; gap: 8px; }
+  .topbar-logo span { font-size: 15px; font-weight: 600; }
+  .hamburger {
+    background: none; border: none; color: var(--text-secondary); cursor: pointer;
+    padding: 8px; border-radius: var(--radius-sm); display: flex; flex-direction: column; gap: 4px;
+  }
+  .hamburger span { display: block; width: 20px; height: 2px; background: currentColor; border-radius: 2px; transition: all 0.25s ease; }
+  .hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(4px, 4px); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(4px, -4px); }
+
+  /* Overlay móvil */
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 199; backdrop-filter: blur(2px);
+  }
+  .sidebar-overlay.open { display: block; }
+
+  /* ── MAIN ── */
+  main {
+    margin-left: var(--sidebar-w); padding: 36px 40px; min-height: 100vh;
+  }
   .page-header { margin-bottom: 28px; }
   .page-title { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; }
   .page-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
+  /* ── FORM CARD ── */
   .form-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 24px; margin-bottom: 28px; }
   .form-card-label { font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 18px; }
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -81,7 +116,7 @@
   label { font-size: 11.5px; font-weight: 500; color: var(--text-muted); letter-spacing: 0.02em; text-transform: uppercase; }
   input, textarea {
     background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md);
-    color: var(--text-primary); font-size: 13.5px; padding: 9px 12px; width: 100%; outline: none;
+    color: var(--text-primary); font-size: 16px; padding: 11px 12px; width: 100%; outline: none;
     transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
     font-family: inherit; appearance: none; -webkit-appearance: none;
   }
@@ -91,32 +126,35 @@
   input[type="datetime-local"] { color-scheme: dark; }
   textarea { resize: vertical; min-height: 68px; line-height: 1.5; }
 
+  /* ── TAGS ── */
   .tags-wrapper {
     background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-md);
-    padding: 6px 10px; min-height: 42px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
+    padding: 6px 10px; min-height: 46px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center;
     transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
     cursor: text;
   }
   .tags-wrapper:focus-within { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(99,102,241,0.08); background: var(--bg-elevated); }
-  .tags-wrapper input { background: none; border: none; padding: 3px 4px; flex: 1; min-width: 120px; font-size: 13.5px; box-shadow: none !important; }
-  .tag { background: var(--accent-dim); color: var(--accent-hover); border: 1px solid var(--accent-dim2); border-radius: 100px; padding: 2px 8px 2px 10px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
-  .tag button { background: none; border: none; color: var(--accent-hover); cursor: pointer; font-size: 13px; line-height: 1; opacity: 0.55; padding: 0; display: flex; align-items: center; }
+  .tags-wrapper input { background: none; border: none; padding: 3px 4px; flex: 1; min-width: 100px; font-size: 16px; box-shadow: none !important; }
+  .tag { background: var(--accent-dim); color: var(--accent-hover); border: 1px solid var(--accent-dim2); border-radius: 100px; padding: 3px 8px 3px 10px; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .tag button { background: none; border: none; color: var(--accent-hover); cursor: pointer; font-size: 14px; line-height: 1; opacity: 0.55; padding: 2px; display: flex; align-items: center; min-width: 24px; min-height: 24px; justify-content: center; }
   .tag button:hover { opacity: 1; }
 
   .suggestions-box { background: var(--bg-elevated); border: 1px solid var(--border-md); border-radius: var(--radius-md); margin-top: 4px; overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.4); display: none; }
-  .suggestions-box div { padding: 9px 12px; cursor: pointer; font-size: 13.5px; color: var(--text-secondary); transition: background var(--transition), color var(--transition); }
+  .suggestions-box div { padding: 11px 12px; cursor: pointer; font-size: 14px; color: var(--text-secondary); transition: background var(--transition), color var(--transition); min-height: 44px; display: flex; align-items: center; }
   .suggestions-box div:hover { background: var(--bg-hover); color: var(--text-primary); }
 
   .form-bottom { grid-column: 1 / -1; display: flex; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--border); margin-top: 4px; }
   .btn-primary {
     background: var(--accent); color: white; border: none; border-radius: var(--radius-md);
-    padding: 10px 20px; font-size: 13.5px; font-weight: 500; cursor: pointer;
-    transition: background var(--transition), transform 0.1s; display: inline-flex; align-items: center; gap: 6px; font-family: inherit;
+    padding: 12px 20px; font-size: 14px; font-weight: 500; cursor: pointer;
+    transition: background var(--transition), transform 0.1s; display: inline-flex; align-items: center; gap: 6px;
+    font-family: inherit; min-height: 44px; touch-action: manipulation;
   }
   .btn-primary:hover { background: var(--accent-hover); }
   .btn-primary:active { transform: scale(0.98); }
 
-  .activities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+  /* ── CARDS ── */
+  .activities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
   .activity-card {
     background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-xl);
     padding: 20px; display: flex; flex-direction: column;
@@ -133,14 +171,20 @@
   .s-completed { background: var(--green-dim); color: var(--green); border: 1px solid rgba(52,211,153,0.2); }
   .card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 14px; white-space: pre-line; }
   .card-people { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
-  .person-chip { font-size: 11.5px; font-weight: 500; background: var(--bg-hover); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 100px; padding: 2px 10px; }
+  .person-chip { font-size: 11.5px; font-weight: 500; background: var(--bg-hover); color: var(--text-secondary); border: 1px solid var(--border); border-radius: 100px; padding: 3px 10px; }
   .no-assign { font-size: 12px; color: var(--text-muted); font-style: italic; }
   .card-dates { padding: 10px 12px; background: var(--bg-base); border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 16px; display: flex; flex-direction: column; gap: 4px; }
   .card-date-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); }
   .card-date-row span { color: var(--text-secondary); }
   .card-divider { height: 1px; background: var(--border); margin-bottom: 14px; }
   .card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-  .btn-sm { padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500; border: 1px solid transparent; cursor: pointer; transition: background var(--transition), color var(--transition), transform 0.1s; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; }
+  .btn-sm {
+    padding: 8px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500;
+    border: 1px solid transparent; cursor: pointer;
+    transition: background var(--transition), color var(--transition), transform 0.1s;
+    display: inline-flex; align-items: center; gap: 5px; font-family: inherit;
+    min-height: 36px; touch-action: manipulation;
+  }
   .btn-sm:active { transform: scale(0.97); }
   .btn-ghost { background: var(--bg-hover); color: var(--text-secondary); border-color: var(--border); }
   .btn-ghost:hover { color: var(--text-primary); border-color: var(--border-md); }
@@ -152,36 +196,148 @@
   .empty-state { grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-muted); }
   .empty-state p { font-size: 14px; margin-top: 12px; }
 
+  /* ── TOAST ── */
   #toast {
-    position: fixed; bottom: 24px; right: 24px; padding: 11px 18px; border-radius: var(--radius-md);
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    padding: 11px 18px; border-radius: var(--radius-md);
     font-size: 13.5px; font-weight: 500; z-index: 1000; display: none;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); white-space: nowrap;
+    max-width: calc(100vw - 32px);
   }
   .toast-ok { background: var(--bg-elevated); border: 1px solid var(--border-md); color: var(--text-primary); }
   .toast-err { background: var(--red-dim); border: 1px solid rgba(248,113,113,0.2); color: var(--red); }
 
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+  /* ── MODAL ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); display: none; align-items: flex-end; justify-content: center; z-index: 300; padding: 0; }
   .modal-overlay.open { display: flex; }
-  .modal-box { background: var(--bg-surface); border: 1px solid var(--border-md); border-radius: var(--radius-xl); padding: 28px; width: 100%; max-width: 420px; animation: slideUp 0.25s ease; box-shadow: 0 24px 48px rgba(0,0,0,0.5); }
+  .modal-box {
+    background: var(--bg-surface); border: 1px solid var(--border-md);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding: 28px 24px calc(28px + env(safe-area-inset-bottom, 0px));
+    width: 100%; max-width: 480px;
+    animation: slideUpModal 0.28s cubic-bezier(0.16,1,0.3,1);
+    box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+  }
+  @keyframes slideUpModal { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-drag { width: 36px; height: 4px; background: var(--border-md); border-radius: 99px; margin: 0 auto 20px; }
   .modal-title { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; margin-bottom: 4px; }
   .modal-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
-  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-  .btn-cancel { background: var(--bg-hover); color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 9px 18px; font-size: 13.5px; cursor: pointer; font-family: inherit; transition: color var(--transition); }
+  .modal-actions { display: flex; justify-content: stretch; gap: 8px; margin-top: 16px; }
+  .modal-actions .btn-cancel,
+  .modal-actions .btn-primary { flex: 1; justify-content: center; }
+  .btn-cancel {
+    background: var(--bg-hover); color: var(--text-secondary); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 12px 18px; font-size: 14px; cursor: pointer;
+    font-family: inherit; transition: color var(--transition); min-height: 44px; touch-action: manipulation;
+  }
   .btn-cancel:hover { color: var(--text-primary); }
 
   .obs-note { background: var(--green-dim); border: 1px solid rgba(52,211,153,0.2); border-radius: var(--radius-md); padding: 10px 12px; font-size: 12.5px; color: var(--green); margin-top: 12px; }
+
+  /* ── BOTTOM NAV (móvil) ── */
+  .bottom-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--bg-surface); border-top: 1px solid var(--border);
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+    z-index: 198;
+  }
+  .bottom-nav-inner { display: flex; }
+  .bottom-nav button {
+    flex: 1; background: none; border: none; cursor: pointer; font-family: inherit;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    padding: 6px 0; color: var(--text-muted); font-size: 10px; font-weight: 500;
+    transition: color var(--transition); min-height: 44px;
+  }
+  .bottom-nav button.active { color: var(--accent-hover); }
+  .bottom-nav button svg { width: 20px; height: 20px; }
+
+  /* ── FAB (móvil) ── */
+  .fab {
+    display: none; position: fixed; bottom: calc(72px + env(safe-area-inset-bottom, 0px)); right: 20px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--accent); border: none; cursor: pointer; z-index: 197;
+    align-items: center; justify-content: center;
+    box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+    transition: background var(--transition), transform 0.15s;
+    touch-action: manipulation;
+  }
+  .fab:active { transform: scale(0.94); }
+  .fab:hover { background: var(--accent-hover); }
+
+  /* Form drawer móvil */
+  .form-drawer {
+    display: none; position: fixed; inset: 0; z-index: 299;
+    align-items: flex-end; background: rgba(0,0,0,0.7); backdrop-filter: blur(3px);
+  }
+  .form-drawer.open { display: flex; }
+  .form-drawer-box {
+    background: var(--bg-surface); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border: 1px solid var(--border-md); border-bottom: none;
+    padding: 20px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+    width: 100%; max-height: 90dvh; overflow-y: auto;
+    animation: slideUpModal 0.28s cubic-bezier(0.16,1,0.3,1);
+  }
+  .form-drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .form-drawer-title { font-size: 15px; font-weight: 600; }
+  .close-drawer {
+    background: var(--bg-hover); border: none; color: var(--text-muted);
+    border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    aside { transform: translateX(-100%); }
+    aside.open { transform: translateX(0); }
+    .topbar { display: flex; }
+    main { margin-left: 0; padding: 80px 16px calc(80px + env(safe-area-inset-bottom, 0px)); }
+    .form-card { display: none; } /* en móvil se usa el FAB + drawer */
+    .fab { display: flex; }
+    .bottom-nav { display: block; }
+    .activities-grid { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-group.full { grid-column: 1; }
+    .page-title { font-size: 18px; }
+  }
+
+  @media (min-width: 769px) {
+    .modal-overlay { align-items: center; padding: 20px; }
+    .modal-box { border-radius: var(--radius-xl); padding: 28px; max-width: 420px; }
+    @keyframes slideUpModal { from { opacity: 0; transform: translateY(16px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .modal-drag { display: none; }
+    .modal-actions { justify-content: flex-end; }
+    .modal-actions .btn-cancel,
+    .modal-actions .btn-primary { flex: none; }
+  }
 </style>
 </head>
 <body>
 
-<aside>
+<!-- Overlay sidebar móvil -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- Topbar móvil -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="sidebar-logo-icon">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M2 3h12v2H2zm0 4h8v2H2zm0 4h5v2H2z"/></svg>
+    </div>
+    <span>Checklist</span>
+  </div>
+  <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menú">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+
+<!-- Sidebar -->
+<aside id="sidebar">
   <div class="sidebar-logo">
     <div class="sidebar-logo-icon">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="white"><path d="M2 3h12v2H2zm0 4h8v2H2zm0 4h5v2H2z"/></svg>
     </div>
     <span>Checklist</span>
   </div>
-
   <p class="nav-label">Menú</p>
   <nav>
     <button onclick="switchView('activities')" id="tab-activities" class="active">
@@ -193,7 +349,6 @@
       Historial
     </button>
   </nav>
-
   <div class="sidebar-footer">
     <button onclick="logout()" class="logout-btn">
       <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8.5l3-3-3-3v2H5v2h5.5v2zM8 12v2H2V2h6v2H4v8h4z"/></svg>
@@ -202,18 +357,20 @@
   </div>
 </aside>
 
+<!-- Main -->
 <main>
   <div class="page-header">
     <h1 class="page-title" id="page-title">Actividades</h1>
     <p class="page-subtitle" id="page-subtitle">Crea y gestiona tus actividades pendientes</p>
   </div>
 
+  <!-- Form card (solo desktop) -->
   <div class="form-card" id="form-section">
     <p class="form-card-label">Nueva actividad</p>
     <div class="form-grid">
       <div class="form-group">
         <label>Título</label>
-        <input id="title" placeholder="Nombre de la actividad">
+        <input id="title" placeholder="Nombre de la actividad" autocomplete="off">
       </div>
       <div class="form-group">
         <label>Descripción</label>
@@ -223,7 +380,7 @@
         <label>Personas asignadas</label>
         <div class="tags-wrapper" id="tagsWrapper" onclick="document.getElementById('peopleInput').focus()">
           <div id="peopleTags" style="display:contents;"></div>
-          <input id="peopleInput" placeholder="Escribe un nombre y presiona Enter">
+          <input id="peopleInput" placeholder="Escribe un nombre y presiona Enter" autocomplete="off">
         </div>
         <div id="suggestions" class="suggestions-box"></div>
       </div>
@@ -247,10 +404,76 @@
   <div class="activities-grid" id="activities"></div>
 </main>
 
+<!-- FAB móvil -->
+<button class="fab" onclick="openFormDrawer()" aria-label="Nueva actividad">
+  <svg width="22" height="22" viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="2" stroke-linecap="round">
+    <line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/>
+  </svg>
+</button>
+
+<!-- Bottom nav móvil -->
+<div class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button onclick="switchView('activities')" id="bnav-activities" class="active">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h12v2H2zm0 4h8v2H2zm0 4h5v2H2z"/></svg>
+      Actividades
+    </button>
+    <button onclick="switchView('history')" id="bnav-history">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm.5 3.5v4.25l3 1.5-.5 1L7.5 8.5V4.5h1z"/></svg>
+      Historial
+    </button>
+  </div>
+</div>
+
+<!-- Form Drawer móvil -->
+<div class="form-drawer" id="formDrawer" onclick="handleDrawerClick(event)">
+  <div class="form-drawer-box">
+    <div class="form-drawer-header">
+      <span class="form-drawer-title">Nueva actividad</span>
+      <button class="close-drawer" onclick="closeFormDrawer()">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Título</label>
+        <input id="title-m" placeholder="Nombre de la actividad" autocomplete="off">
+      </div>
+      <div class="form-group full">
+        <label>Descripción</label>
+        <textarea id="description-m" placeholder="Detalles opcionales..." style="min-height:56px;"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>Personas asignadas</label>
+        <div class="tags-wrapper" id="tagsWrapper-m" onclick="document.getElementById('peopleInput-m').focus()">
+          <div id="peopleTags-m" style="display:contents;"></div>
+          <input id="peopleInput-m" placeholder="Nombre + Enter" autocomplete="off">
+        </div>
+        <div id="suggestions-m" class="suggestions-box"></div>
+      </div>
+      <div class="form-group">
+        <label>Inicio</label>
+        <input type="datetime-local" id="start-m">
+      </div>
+      <div class="form-group">
+        <label>Fin</label>
+        <input type="datetime-local" id="end-m">
+      </div>
+      <div class="form-group full" style="margin-top:4px;">
+        <button class="btn-primary" onclick="createActivityMobile()" style="width:100%;justify-content:center;">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round"><line x1="7" y1="1" x2="7" y2="13"/><line x1="1" y1="7" x2="13" y2="7"/></svg>
+          Crear actividad
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
 <div id="toast"></div>
 
+<!-- Modal observaciones -->
 <div id="modalObs" class="modal-overlay">
   <div class="modal-box">
+    <div class="modal-drag"></div>
     <h2 class="modal-title">Finalizar actividad</h2>
     <p class="modal-subtitle">Añade observaciones antes de marcar como completada.</p>
     <div class="form-group">
@@ -271,12 +494,41 @@
 let user = JSON.parse(localStorage.getItem("user"));
 if (!user) window.location.href = "index.html";
 
-let selectedPeople = [], allPeople = [], currentActivityId = null;
+let selectedPeople = [], selectedPeopleM = [], allPeople = [], currentActivityId = null;
 
+// ── Sidebar móvil ──
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  const o = document.getElementById('sidebarOverlay');
+  const h = document.getElementById('hamburger');
+  const open = s.classList.toggle('open');
+  o.classList.toggle('open', open);
+  h.classList.toggle('open', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ── Form Drawer ──
+function openFormDrawer() { document.getElementById('formDrawer').classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeFormDrawer() { document.getElementById('formDrawer').classList.remove('open'); document.body.style.overflow = ''; }
+function handleDrawerClick(e) { if (e.target === document.getElementById('formDrawer')) closeFormDrawer(); }
+
+// ── Views ──
 function switchView(view) {
-  document.getElementById('tab-activities').classList.toggle('active', view === 'activities');
-  document.getElementById('tab-history').classList.toggle('active', view === 'history');
+  ['activities','history'].forEach(v => {
+    document.getElementById(`tab-${v}`).classList.toggle('active', v === view);
+    const bn = document.getElementById(`bnav-${v}`);
+    if (bn) bn.classList.toggle('active', v === view);
+  });
   document.getElementById('form-section').style.display = view === 'activities' ? 'block' : 'none';
+  const fab = document.querySelector('.fab');
+  if (fab) fab.style.display = view === 'activities' ? 'flex' : 'none';
+
   if (view === 'activities') {
     document.getElementById('page-title').textContent = 'Actividades';
     document.getElementById('page-subtitle').textContent = 'Crea y gestiona tus actividades pendientes';
@@ -286,8 +538,10 @@ function switchView(view) {
     document.getElementById('page-subtitle').textContent = 'Actividades completadas';
     loadHistory();
   }
+  closeSidebar();
 }
 
+// ── Toast ──
 function showToast(msg, error = false) {
   const t = document.getElementById("toast");
   t.textContent = msg;
@@ -297,73 +551,103 @@ function showToast(msg, error = false) {
   t._t = setTimeout(() => t.style.display = "none", 3000);
 }
 
+// ── People ──
 async function loadPeople() {
   try { let r = await fetch('/api/people'); allPeople = await r.json(); } catch(e) {}
 }
 
-function renderTags() {
-  document.getElementById("peopleTags").innerHTML = selectedPeople.map((p, i) =>
-    `<span class="tag">${p}<button onclick="removePerson(${i})">✕</button></span>`
+function renderTags(arr, containerId) {
+  document.getElementById(containerId).innerHTML = arr.map((p, i) =>
+    `<span class="tag">${p}<button onclick="removePerson(${i},'${containerId}')">✕</button></span>`
   ).join('');
 }
 
-function removePerson(i) { selectedPeople.splice(i, 1); renderTags(); }
-
-function showSuggestions(val) {
-  const box = document.getElementById("suggestions");
-  if (!val) { box.style.display = 'none'; return; }
-  const matches = allPeople.filter(p => p.name.toLowerCase().includes(val.toLowerCase()));
-  if (!matches.length) { box.style.display = 'none'; return; }
-  box.innerHTML = matches.map(p => `<div onclick="selectSuggestion('${p.name}')">${p.name}</div>`).join('');
-  box.style.display = 'block';
+function removePerson(i, containerId) {
+  if (containerId === 'peopleTags') { selectedPeople.splice(i,1); renderTags(selectedPeople,'peopleTags'); }
+  else { selectedPeopleM.splice(i,1); renderTags(selectedPeopleM,'peopleTags-m'); }
 }
 
-function selectSuggestion(name) {
-  if (!selectedPeople.some(p => p.toLowerCase() === name.toLowerCase())) { selectedPeople.push(name); renderTags(); }
-  document.getElementById("peopleInput").value = "";
-  document.getElementById("suggestions").style.display = 'none';
-}
+function setupPeopleInput(inputId, tagsId, suggestionsId, arr) {
+  const input = document.getElementById(inputId);
+  const box   = document.getElementById(suggestionsId);
 
-const pInput = document.getElementById("peopleInput");
-pInput.addEventListener("input", e => showSuggestions(e.target.value));
-pInput.addEventListener("keydown", e => {
-  if (e.key !== "Enter") return;
-  e.preventDefault();
-  let v = e.target.value.trim();
-  if (!v) return;
-  if (!selectedPeople.some(p => p.toLowerCase() === v.toLowerCase())) selectedPeople.push(v);
-  renderTags(); e.target.value = "";
-  document.getElementById("suggestions").style.display = 'none';
-});
-document.addEventListener('click', e => {
-  if (!e.target.closest('#tagsWrapper') && !e.target.closest('#suggestions'))
-    document.getElementById("suggestions").style.display = 'none';
-});
-
-async function createActivity() {
-  let title = document.getElementById("title").value;
-  let description = document.getElementById("description").value;
-  let start = document.getElementById("start").value;
-  let end = document.getElementById("end").value;
-  if (!title || !start || !end) return showToast("Completa los campos requeridos", true);
-  let res = await fetch('/api/activities', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, description, start_time: start, end_time: end, user_id: user.id, people_names: selectedPeople })
+  input.addEventListener("input", e => {
+    const val = e.target.value;
+    if (!val) { box.style.display='none'; return; }
+    const matches = allPeople.filter(p => p.name.toLowerCase().includes(val.toLowerCase()));
+    if (!matches.length) { box.style.display='none'; return; }
+    box.innerHTML = matches.map(p => `<div onmousedown="selectSuggestion('${p.name}','${inputId}','${tagsId}','${suggestionsId}',${arr===selectedPeople?'true':'false'})">${p.name}</div>`).join('');
+    box.style.display = 'block';
   });
-  let data = await res.json();
-  if (data.success) {
-    showToast("Actividad creada");
-    ['title','description','start','end'].forEach(id => document.getElementById(id).value = "");
-    selectedPeople = []; renderTags(); loadActivities();
-  } else showToast("Error al crear actividad", true);
+
+  input.addEventListener("keydown", e => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    let v = e.target.value.trim();
+    if (!v) return;
+    if (!arr.some(p => p.toLowerCase() === v.toLowerCase())) arr.push(v);
+    renderTags(arr, tagsId); e.target.value = "";
+    box.style.display = 'none';
+  });
 }
 
+function selectSuggestion(name, inputId, tagsId, suggestionsId, isMain) {
+  const arr = isMain ? selectedPeople : selectedPeopleM;
+  if (!arr.some(p => p.toLowerCase() === name.toLowerCase())) arr.push(name);
+  renderTags(arr, tagsId);
+  document.getElementById(inputId).value = "";
+  document.getElementById(suggestionsId).style.display = 'none';
+}
+
+document.addEventListener('click', e => {
+  ['suggestions','suggestions-m'].forEach(id => {
+    const box = document.getElementById(id);
+    if (box && !e.target.closest(`#${id}`) && !e.target.closest(`#${id==='suggestions'?'tagsWrapper':'tagsWrapper-m'}`))
+      box.style.display = 'none';
+  });
+});
+
+// ── Crear actividad (desktop) ──
+async function createActivity() {
+  const title = document.getElementById("title").value;
+  const description = document.getElementById("description").value;
+  const start = document.getElementById("start").value;
+  const end = document.getElementById("end").value;
+  if (!title || !start || !end) return showToast("Completa los campos requeridos", true);
+  await submitActivity(title, description, start, end, selectedPeople);
+  ['title','description','start','end'].forEach(id => document.getElementById(id).value="");
+  selectedPeople = []; renderTags(selectedPeople,'peopleTags');
+}
+
+// ── Crear actividad (móvil) ──
+async function createActivityMobile() {
+  const title = document.getElementById("title-m").value;
+  const description = document.getElementById("description-m").value;
+  const start = document.getElementById("start-m").value;
+  const end = document.getElementById("end-m").value;
+  if (!title || !start || !end) return showToast("Completa los campos requeridos", true);
+  await submitActivity(title, description, start, end, selectedPeopleM);
+  ['title-m','description-m','start-m','end-m'].forEach(id => document.getElementById(id).value="");
+  selectedPeopleM = []; renderTags(selectedPeopleM,'peopleTags-m');
+  closeFormDrawer();
+}
+
+async function submitActivity(title, description, start, end, people) {
+  const res = await fetch('/api/activities', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, description, start_time: start, end_time: end, user_id: user.id, people_names: people })
+  });
+  const data = await res.json();
+  if (data.success) { showToast("Actividad creada"); loadActivities(); }
+  else showToast("Error al crear actividad", true);
+}
+
+// ── Cards ──
 function badge(s) {
   const map = { pending: ['s-pending','Pendiente'], in_progress: ['s-in_progress','En curso'], completed: ['s-completed','Completado'] };
   const [cls, label] = map[s] || map.pending;
   return `<span class="status-badge ${cls}">${label}</span>`;
 }
-
 function fmtDate(d) {
   return new Date(d).toLocaleString('es-ES', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
 }
@@ -374,9 +658,7 @@ async function loadActivities() {
   let data = await (await fetch('/api/activities')).json();
   c.innerHTML = "";
   const filtered = data.filter(a => a.status !== 'completed');
-  if (!filtered.length) {
-    c.innerHTML = `<div class="empty-state"><p>No hay actividades activas</p></div>`; return;
-  }
+  if (!filtered.length) { c.innerHTML = `<div class="empty-state"><p>No hay actividades activas</p></div>`; return; }
   filtered.forEach(act => {
     const pHTML = act.activity_assignments?.length
       ? act.activity_assignments.map(a => `<span class="person-chip">${a.people?.name}</span>`).join('')
@@ -407,9 +689,7 @@ async function loadHistory() {
   let data = await (await fetch('/api/activities')).json();
   c.innerHTML = "";
   const filtered = data.filter(a => a.status === 'completed');
-  if (!filtered.length) {
-    c.innerHTML = `<div class="empty-state"><p>Ninguna actividad completada aún</p></div>`; return;
-  }
+  if (!filtered.length) { c.innerHTML = `<div class="empty-state"><p>Ninguna actividad completada aún</p></div>`; return; }
   filtered.forEach(act => {
     const pHTML = act.activity_assignments?.length
       ? act.activity_assignments.map(a => `<span class="person-chip">${a.people?.name}</span>`).join('')
@@ -435,7 +715,7 @@ async function updateStatus(id, status) {
 }
 
 function openModal(id) { currentActivityId = id; document.getElementById("modalObs").classList.add("open"); }
-function closeModal() { document.getElementById("modalObs").classList.remove("open"); document.getElementById("obsInput").value = ""; }
+function closeModal() { document.getElementById("modalObs").classList.remove("open"); document.getElementById("obsInput").value=""; }
 
 async function confirmComplete() {
   let observations = document.getElementById("obsInput").value;
@@ -450,6 +730,10 @@ async function confirmComplete() {
 function logout() { localStorage.removeItem("user"); window.location.href = "/"; }
 
 document.getElementById("modalObs").addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+
+// Setup inputs
+setupPeopleInput('peopleInput','peopleTags','suggestions', selectedPeople);
+setupPeopleInput('peopleInput-m','peopleTags-m','suggestions-m', selectedPeopleM);
 
 loadPeople();
 loadActivities();
