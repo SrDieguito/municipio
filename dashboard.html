@@ -251,6 +251,8 @@
   }
   .bottom-nav button.active { color: var(--accent-hover); }
   .bottom-nav button svg { width: 20px; height: 20px; }
+  .bottom-nav button.logout-nav:hover,
+  .bottom-nav button.logout-nav:active { color: var(--red); }
 
   /* ── FAB (móvil) ── */
   .fab {
@@ -421,6 +423,10 @@
     <button onclick="switchView('history')" id="bnav-history">
       <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm.5 3.5v4.25l3 1.5-.5 1L7.5 8.5V4.5h1z"/></svg>
       Historial
+    </button>
+    <button onclick="logout()" class="logout-nav">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M10.5 8.5l3-3-3-3v2H5v2h5.5v2zM8 12v2H2V2h6v2H4v8h4z"/></svg>
+      Salir
     </button>
   </div>
 </div>
